@@ -47,7 +47,12 @@ _string :: proc(type: $T) -> (res: string) {
 		/*
 			We could do `string(t[:4])`, but this also handles e.g. `©too`.
 		*/
-		return fmt.bprintf(buffer[:], "%c%c%c%c", t[0], t[1], t[2], t[3])
+		if is_printable(t[:]) {
+			return fmt.bprintf(buffer[:], "%c%c%c%c",           t[0], t[1], t[2], t[3])
+		} else {
+			return fmt.bprintf(buffer[:], "0x%02x%02x%02x%02x", t[0], t[1], t[2], t[3])
+		}
+
 	} else when T == UUID {
 		return _string_common(type)
 	} else {
@@ -114,4 +119,3 @@ is_printable :: proc(buf: []u8) -> (printable: bool) {
 	}
 	return
 }
-

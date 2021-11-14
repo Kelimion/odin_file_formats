@@ -20,6 +20,8 @@ UUID_RFC_4122 :: struct {
 }
 #assert(size_of(UUID_RFC_4122) == 16)
 
+FourCC_ :: u32be
+
 _string :: proc(t: $T) -> (res: string) {
 	buffer := PRINT_BUFFER[:]
 

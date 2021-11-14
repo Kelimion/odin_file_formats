@@ -1,4 +1,4 @@
 @echo off
-pushd ..\isom
+pushd ..\bmff
 call build.bat
 popd

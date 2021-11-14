@@ -119,15 +119,15 @@ print_hdlr :: proc(f: ^BMFF_File, atom: $T, level := int(0)) {
 	hdlr    := (^HDLR)(raw_data(payload))^
 	using hdlr
 
-	if component_type != .any_type {
+	if component_type != nil {
 		printf(level, "Type:         %v\n", _string(component_type))
 	}
 
-	if component_subtype != .any_type {
+	if component_subtype != nil {
 		printf(level, "Sub-Type:     %v\n", _string(component_subtype))
 	}
 
-	if component_manufacturer != .any_type {
+	if component_manufacturer != nil {
 		printf(level, "Manufacturer: %v\n", _string(component_manufacturer))
 	}
 
