@@ -19,7 +19,7 @@ _main :: proc() {
 
 	if len(os.args) == 1 {
 		println("ISO Base Media File Format parser example")
-		printf("Usage: %v [isom filename]\n\n", EXE_NAME)
+		printf("Usage: %v [bmff filename]\n\n", EXE_NAME)
 		os.exit(1)
 	}
 

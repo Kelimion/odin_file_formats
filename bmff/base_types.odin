@@ -9,14 +9,8 @@ package iso_bmff
 
 	See: https://www.iso.org/standard/68960.html and https://www.loc.gov/preservation/digital/formats/fdd/fdd000079.shtml
 
-	This file contains type definitions.
+	This file contains base type definitions.
 */
-
-import "core:mem"
-import "core:os"
-import "core:fmt"
-
-_ :: fmt.println
 
 import "../common"
 
@@ -27,17 +21,32 @@ Error :: enum {
 	File_Empty,
 	File_Ended_Early,
 	Read_Error,
+
 	Wrong_File_Format,
 	Error_Parsing_iTunes_Metadata,
 
-	Unknown_MVHD_Version,
-	Unknown_TKHD_Version,
-	Unknown_MDHD_Version,
+	ELST_Unknown_Version,
+	ELST_Invalid_Size,
+
+	FTYP_Duplicated,
+	FTYP_Invalid_Size,
+
+	HDLR_Unexpected_Parent,
+	HDLR_Invalid_Size,
+
+	MDHD_Unknown_Version,
+	MDHD_Invalid_Size,
+
+	MVHD_Unknown_Version,
+	MVHD_Invalid_Size,
+
+	TKHD_Unknown_Version,
+	TKHD_Invalid_Size,
 }
 
 BCD4   :: distinct [4]u8
 
-FourCC :: enum u32be {
+FourCC :: enum common.FourCC {
 	/*
 		File root dummy Box.
 	*/
@@ -132,82 +141,11 @@ FourCC :: enum u32be {
 	sound = 's' << 24 | 'o' << 16 | 'u' << 8 | 'n', // 0x736f756e
 }
 
-BMFF_Box_Header_File :: struct {
-	size: u32be,
-	type: FourCC,
-}
-#assert(size_of(BMFF_Box_Header_File) == 8)
-
-
 /*
 	UUIDs are compliant with RFC 4122: A Universally Unique IDentifier (UUID) URN Namespace
 	                         (https://www.rfc-editor.org/rfc/rfc4122.html)
 */
 UUID :: common.UUID_RFC_4122
-
-BMFF_Box_Header :: struct {
-	/*
-		Box file offset, and size including header.
-	*/
-	offset:         i64,
-	size:           i64,
-	end:            i64,
-
-	payload_offset: i64,
-	payload_size:   i64,
-
-	type:           FourCC,
-	uuid:           UUID,
-}
-
-BMFF_Box :: struct {
-	using header: BMFF_Box_Header,
-
-	parent:         ^BMFF_Box,
-	next:           ^BMFF_Box,
-	first_child:    ^BMFF_Box,
-
-	/*
-		Payload can be empty
-	*/
-	payload:        [dynamic]u8,
-}
-
-BMFF_File :: struct {
-	/*
-		Root atom
-	*/
-	root: ^BMFF_Box,
-
-	/*
-		Important atoms
-	*/
-	ftyp: ^BMFF_Box,
-	moov: ^BMFF_Box,
-	mvhd: ^BMFF_Box,
-	mdat: ^BMFF_Box,
-
-	/*
-		Apple Metadata isd not specified in ISO 14496-12-2015.
-		Nevertheless, we add support for it.
-
-		If `moov.udta.meta.hdlr` == `mdir/appl`,
-		then `itunes_metadata` is set to `moov.udta.meta.ilst`
-	*/
-	itunes_metadata: ^BMFF_Box,
-
-	/*
-		Useful file members
-	*/
-	time_scale: u32be,
-
-	/*
-		Implementation
-	*/
-	file_info: os.File_Info,
-	handle:    os.Handle,
-	allocator: mem.Allocator,
-}
 
 Fixed_16_16    :: distinct u32be
 Fixed_2_30     :: distinct u32be
@@ -220,176 +158,8 @@ View_Matrix :: struct #packed {
 	c: Fixed_16_16, d: Fixed_16_16, v: Fixed_2_30,
 	x: Fixed_16_16, y: Fixed_16_16, w: Fixed_2_30,
 }
+#assert(size_of(View_Matrix) == 9 * size_of(u32be))
 
 MVHD_Predefined :: struct {
 	foo: [6]u32be,
 }
-
-/*
-	Files that don't start with 'ftyp' have this synthetic one.
-*/
-DEFAULT_FTYP :: struct{
-	brand: FourCC,
-	version: BCD4,
-	compat: FourCC,
-}{
-	brand   = .mp41,
-	version = 0,
-	compat  = .mp41,
-}
-
-Version_and_Flags :: struct #packed {
-	version:           u8,
-	flags:             [3]u8,	
-}
-
-MVHD_V0 :: struct #packed {
-	using vf:          Version_and_Flags,
-	creation_time:     u32be,
-	modification_time: u32be,
-	time_scale:        u32be,
-	duration:          u32be,
-	preferred_rate:    Fixed_16_16,
-	preferred_volume:  Fixed_8_8,
-	_reserved:         [10]u8,
-	view_matrix:       View_Matrix,
-	predefined:        MVHD_Predefined,
-	next_track_id:     u32be,
-}
-#assert(size_of(MVHD_V0) == 100)
-
-MVHD_V1 :: struct #packed {
-	using vf:          Version_and_Flags,
-	creation_time:     u64be,
-	modification_time: u64be,
-	time_scale:        u32be,
-	duration:          u64be,
-	preferred_rate:    Fixed_16_16,
-	preferred_volume:  Fixed_8_8,
-	_reserved:         [10]u8,
-	view_matrix:       View_Matrix,
-	predefined:        MVHD_Predefined,
-	next_track_id:     u32be,
-}
-#assert(size_of(MVHD_V1) == 112)
-
-Track_Header_Flag :: enum u8 {
-	track_enabled              = 0,
-	track_in_movie             = 1,
-	track_size_is_aspect_ratio = 2,
-}
-Track_Header_Flags :: bit_set[Track_Header_Flag; u8]
-
-TKHD_V0 :: struct #packed {
-	version:           u8,
-	_flags:            [2]u8,
-	flags:             Track_Header_Flags,
-	creation_time:     u32be,
-	modification_time: u32be,
-	track_id:          u32be,
-	_reserved_1:       u32be,
-	duration:          u32be,
-	_reserved_2:       [2]u32be,
-	layer:             i16be,
-	alternate_group:   i16be,
-	volume:            Fixed_8_8,
-	reserved_3:        u16be,
-	view_matrix:       View_Matrix,
-	width:             Fixed_16_16,
-	height:            Fixed_16_16,
-}
-#assert(size_of(TKHD_V0) == 84)
-
-TKHD_V1 :: struct #packed {
-	version:           u8,
-	_flags:            [2]u8,
-	flags:             Track_Header_Flags,
-	creation_time:     u64be,
-	modification_time: u64be,
-	track_id:          u32be,
-	_reserved_1:       u32be,
-	duration:          u64be,
-	_reserved_2:       [2]u32be,
-	layer:             i16be,
-	alternate_group:   i16be,
-	volume:            Fixed_8_8,
-	reserved_3:        u16be,
-	view_matrix:       View_Matrix,
-	width:             Fixed_16_16,
-	height:            Fixed_16_16,
-}
-#assert(size_of(TKHD_V1) == 96)
-
-ELST_Header :: struct #packed {
-	using vf:          Version_and_Flags,
-	entry_count:       u32be,
-}
-
-ELST_Entry_V0 :: struct #packed {
-	segment_duration:  u32be,
-	media_time:        i32be,
-	media_rate:        Rational_16_16,
-}
-#assert(size_of(ELST_Entry_V0) == 12)
-
-ELST_Entry_V1 :: struct #packed {
-	segment_duration:  u64be,
-	media_time:        i32be,
-	media_rate:        Rational_16_16,
-}
-#assert(size_of(ELST_Entry_V1) == 16)
-
-MDHD_V0 :: struct #packed {
-	using vf:          Version_and_Flags,
-	creation_time:     u32be,
-	modification_time: u32be,
-	time_scale:        u32be,
-	duration:          u32be,
-	language:          ISO_639_2, // ISO-639-2/T language code
-	quality:           u16be,
-}
-#assert(size_of(MDHD_V0) == 24)
-
-MDHD_V1 :: struct #packed {
-	using vf:          Version_and_Flags,
-	creation_time:     u64be,
-	modification_time: u64be,
-	time_scale:        u32be,
-	duration:          u64be,
-	language:          ISO_639_2, // ISO-639-2/T language code
-	quality:           u16be,
-}
-#assert(size_of(MDHD_V1) == 36)
-
-HDLR :: struct #packed {
-	using vf:               Version_and_Flags,
-	component_type:         FourCC,
-	component_subtype:      FourCC,
-	component_manufacturer: FourCC,
-	component_flags:        u32be,
-	reserved:               u32be,
-}
-#assert(size_of(HDLR) == 24)
-
-META :: struct #packed {
-	using vf:               Version_and_Flags,
-}
-#assert(size_of(META) == 4)
-
-ILST_DATA_Type :: enum u32be {
-	Default =  1,
-
-	JPEG    = 13, // moov.udta.meta.ilst.covr.data
-	PNG     = 14, // moov.udta.meta.ilst.covr.data
-}
-
-/*
-	Apple iTunes mdir metadata tag.
-	Found as a child of the various tags under:
-		`moov.udta.meta.ilst`
-*/
-ILST_DATA :: struct {
-	type:    ILST_DATA_Type,
-	subtype: u32be,
-}
-#assert(size_of(ILST_DATA) == 8)

@@ -12,7 +12,6 @@ package iso_bmff
 	This file contains type conversion helpers.
 */
 
-import "core:fmt"
 import "core:time"
 import "../common"
 
@@ -37,22 +36,10 @@ _string :: proc(type: $T) -> (res: string) {
 
 		return string(buffer[:3])
 	} else when T == FourCC {
-		buffer := PRINT_BUFFER[:]
-
 		if type == ._file_root {
 			return "_file_root"
 		}
-
-		t := transmute([4]u8)type
-		/*
-			We could do `string(t[:4])`, but this also handles e.g. `©too`.
-		*/
-		if is_printable(t[:]) {
-			return fmt.bprintf(buffer[:], "%c%c%c%c",           t[0], t[1], t[2], t[3])
-		} else {
-			return fmt.bprintf(buffer[:], "0x%02x%02x%02x%02x", t[0], t[1], t[2], t[3])
-		}
-
+		return _string_common(common.FourCC(type))
 	} else when T == UUID {
 		return _string_common(type)
 	} else {
@@ -95,27 +82,6 @@ _matrix :: proc(mat: View_Matrix) -> (m: matrix[3, 3]f64) {
 		_f64(a), _f64(b), _f64(u),
 		_f64(c), _f64(d), _f64(v),
 		_f64(x), _f64(y), _f64(w),
-	}
-	return
-}
-
-is_printable :: proc(buf: []u8) -> (printable: bool) {
-	printable = true
-	for r in buf {
-		switch r {
-		case '\r', '\n', '\t':
-			continue
-		case 0x00..=0x19:
-			return false
-		case 0x20..=0x7e:
-			continue
-		case 0x7f..=0xa0:
-			return false
-		case 0xa1..=0xff: // ¡ through ÿ except for the soft hyphen
-			if r == 0xad {
-				return false
-			}
-		}
 	}
 	return
 }

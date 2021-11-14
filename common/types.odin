@@ -20,15 +20,15 @@ UUID_RFC_4122 :: struct {
 }
 #assert(size_of(UUID_RFC_4122) == 16)
 
-FourCC_ :: u32be
+FourCC :: distinct u32be
 
-_string :: proc(t: $T) -> (res: string) {
+_string :: proc(type: $T) -> (res: string) {
 	buffer := PRINT_BUFFER[:]
 
 	/* 6ba7b810-9dad-11d1-80b4-00c04fd430c8 */
 
 	when T == UUID_RFC_4122 {
-		using t
+		using type
 		return bprintf(
 			buffer[:], "%06x-%02x-%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 			time_low,
@@ -38,8 +38,40 @@ _string :: proc(t: $T) -> (res: string) {
 			clk_seq_low,
 			node[0], node[1], node[2], node[3], node[4], node[5],
 		)
+	} else when T == FourCC {
+
+		temp := transmute([4]u8)type
+		/*
+			We could do `string(t[:4])`, but this also handles e.g. `©too`.
+		*/
+		if is_printable(temp[:]) {
+			return fmt.bprintf(buffer[:], "%c%c%c%c",           temp[0], temp[1], temp[2], temp[3])
+		} else {
+			return fmt.bprintf(buffer[:], "0x%02x%02x%02x%02x", temp[0], temp[1], temp[2], temp[3])
+		}
 
 	} else {
 		#panic("to_string: Unsupported type.")
 	}
+}
+
+is_printable :: proc(buf: []u8) -> (printable: bool) {
+	printable = true
+	for r in buf {
+		switch r {
+		case '\r', '\n', '\t':
+			continue
+		case 0x00..=0x19:
+			return false
+		case 0x20..=0x7e:
+			continue
+		case 0x7f..=0xa0:
+			return false
+		case 0xa1..=0xff: // ¡ through ÿ except for the soft hyphen
+			if r == 0xad {
+				return false
+			}
+		}
+	}
+	return
 }

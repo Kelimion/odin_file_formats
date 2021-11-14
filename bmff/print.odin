@@ -13,34 +13,27 @@ package iso_bmff
 */
 
 import "core:fmt"
-import "core:runtime"
+import "../common"
 
-print_itunes_metadata :: proc(f: ^BMFF_File, metadata: ^BMFF_Box, level := int(0)) {
-	payload   := metadata.payload[:]
-	ilst_data := (^ILST_DATA)(raw_data(payload))^
-	payload    = payload[size_of(ILST_DATA):]
-
-	#partial switch metadata.parent.type {
-	case .itunes_cover:
-		#partial switch ilst_data.type {
+print_itunes_metadata :: proc(tag: iTunes_Metadata, level := int(0)) {
+	#partial switch tag.type {
+		case .Text: println(level, string(tag.data.(cstring)))
 		case .JPEG: printf(level, "Thumbnail Type: JPEG\n")
 		case .PNG:  printf(level, "Thumbnail Type: PNG\n")
-		case:       printf(level, "Thumbnail Type: Unknown\n")
-		}
-	case .itunes_track, .itunes_disk:
-		// Not ASCII
-	case:
-		if is_printable(payload) {
-			println(level, string(payload))
-		} else {
-			println(level, "Bytes:", payload)
-		}
+		case:
+			v := tag.data.([dynamic]u8)
+			if common.is_printable(v[:]) {
+				println(level, string(v[:]))
+			} else {
+				println(level, "Bytes:", v)
+			}
 	}
 }
 
-print_mdhd :: proc(f: ^BMFF_File, mdhd: $T, level := int(0)) {
-	using mdhd
+print_mdhd :: proc(mdhd: $T, level := int(0)) {
+	#assert(T == MDHD_V0 || T == MDHD_V1)
 
+	using mdhd
 	seconds := f64(duration) / f64(time_scale)
 	printf(level, "duration: %v seconds\n", seconds)
 	printf(level, "created:  %v (%v)\n",   _time(creation_time), creation_time)
@@ -49,8 +42,9 @@ print_mdhd :: proc(f: ^BMFF_File, mdhd: $T, level := int(0)) {
 	printf(level, "quality:  %v\n",        quality)
 }
 
-print_elst :: proc(f: ^BMFF_File, elst: []$T, level := int(0)) {
-	for e, i in elst {
+print_elst :: proc(elst: $T, level := int(0)) {
+	#assert(T == ELST_V0 || T == ELST_V1)
+	for e, i in elst.entries {
 		using e
 		printf(level, "edit: %v\n", i)
 		printf(level + 1, "segment_duration: %v\n",    segment_duration)
@@ -60,11 +54,13 @@ print_elst :: proc(f: ^BMFF_File, elst: []$T, level := int(0)) {
 }
 
 print_tkhd :: proc(f: ^BMFF_File, tkhd: $T, level := int(0)) {
+	#assert(T == TKHD_V0 || T == TKHD_V1)
+
 	using tkhd
 	seconds := f64(duration) / f64(f.time_scale)
 
 	printf(level, "track:    %v\n",         track_id)
-	printf(level, "flags:    %v\n",         flags)
+	printf(level, "flags:    %v\n",         flags_3)
 	printf(level, "duration: %v seconds\n", seconds)
 	printf(level, "created:  %v (%v)\n",    _time(creation_time), creation_time)
 	printf(level, "modified: %v (%v)\n",    _time(modification_time), modification_time)
@@ -78,7 +74,9 @@ print_tkhd :: proc(f: ^BMFF_File, tkhd: $T, level := int(0)) {
 	printf(level, "matrix:   %v\n",         _matrix(view_matrix))
 }
 
-print_mvhd :: proc(f: ^BMFF_File, mvhd: $T, level := int(0)) {
+print_mvhd :: proc(mvhd: $T, level := int(0)) {
+	#assert(T == MVHD_V0 || T == MVHD_V1)
+
 	using mvhd
 	seconds := f64(duration) / f64(time_scale)
 
@@ -91,32 +89,21 @@ print_mvhd :: proc(f: ^BMFF_File, mvhd: $T, level := int(0)) {
 	printf(level, "next track id:    %v\n",         next_track_id)
 }
 
-print_ftyp :: proc(f: ^BMFF_File, atom: ^BMFF_Box, level := int(0)) {
-	assert(atom.type == .ftyp)
+print_ftyp :: proc(ftyp: FTYP, level := int(0)) {
+	using ftyp
 
-	if len(atom.payload) == 0 { return }
-	payload := atom.payload[:]
-
-	brand_major := (^FourCC)(raw_data(payload))^
-	payload     = payload[size_of(FourCC):]
-
-	version_minor := (^BCD4)(raw_data(payload))^
-	payload     = payload[size_of(BCD4):]
-
-	printf(level, "Major Brand:   %v (0x%08x)\n", _string(brand_major), int(brand_major))
-	printf(level, "Minor Version: %v.%v.%v.%v\n", version_minor.x, version_minor.y, version_minor.z, version_minor.w)
+	printf(level, "Major Brand:   %v (0x%08x)\n", _string(brand), int(brand))
+	printf(level, "Minor Version: %v.%v.%v.%v\n", version.x, version.y, version.z, version.w)
 
 	println(level, "Compat:")
-	for len(payload) > 0 {
-		brand   := (^FourCC)(raw_data(payload))^
-		payload  = payload[size_of(FourCC):]
-		println(level + 1, _string(brand))
+	for compat in ftyp.compatible {
+		println(level + 1, _string(compat))
 	}
 }
 
-print_hdlr :: proc(f: ^BMFF_File, atom: $T, level := int(0)) {
-	payload := atom.payload[:]
-	hdlr    := (^HDLR)(raw_data(payload))^
+print_hdlr :: proc(hdlr: $T, level := int(0)) {
+	#assert(T == HDLR)
+
 	using hdlr
 
 	if component_type != nil {
@@ -131,126 +118,85 @@ print_hdlr :: proc(f: ^BMFF_File, atom: $T, level := int(0)) {
 		printf(level, "Manufacturer: %v\n", _string(component_manufacturer))
 	}
 
-	payload  = payload[size_of(HDLR):]
-	name    := cstring(&payload[0])
-
 	if len(name) > 0 {
 		printf(level, "Name:         %v\n", name)
 	}
 }
 
-print_atom :: proc(f: ^BMFF_File, atom: ^BMFF_Box, level := int(0), print_siblings := false, recurse := false) {
-	if atom.type == .uuid {
-		printf(level, "[uuid (%v] Pos: %d. Size: %d\n", _string(atom.uuid), atom.offset, atom.payload_size)
+print_box_header :: proc(box: ^BMFF_Box, level := int(0)) {
+	if box.type == .uuid {
+		printf(level, "[uuid (%v] Pos: %d. Size: %d\n", _string(box.uuid), box.offset, box.payload_size)
 	} else {
-		printf(level, "[%v (0x%08x)] Pos: %d. Size: %d\n", _string(atom.type), int(atom.type), atom.offset, atom.payload_size)
+		printf(level, "[%v (0x%08x)] Pos: %d. Size: %d\n", _string(box.type), int(box.type), box.offset, box.payload_size)
 	}
+}
 
-	#partial switch atom.type {
-	case .ftyp:
-		print_ftyp(f, atom, level + 1)
-	case .mvhd:
-		if len(atom.payload) > 0 {
-			payload := atom.payload[:]
-			version := payload[0]
+print_box :: proc(f: ^BMFF_File, box: ^BMFF_Box, level := int(0), print_siblings := false, recurse := false) {
+	print_box_header(box, level)
 
-			switch version {
-			case 0:
-				mvhd := (^MVHD_V0)(raw_data(payload))^
-				print_mvhd(f, mvhd, level + 1)
-			case 1:
-				mvhd := (^MVHD_V1)(raw_data(payload))^
-				print_mvhd(f, mvhd, level + 1)
-			case:
-				unreachable()
+	#partial switch v in box.payload {
+	case FTYP:
+		print_ftyp(v, level + 1)
+
+	case HDLR:
+		print_hdlr(v, level + 1)
+
+	case MDHD_V0:
+		print_mdhd(v, level + 1)
+
+	case MDHD_V1:
+		print_mdhd(v, level + 1)
+
+	case MVHD_V0:
+		print_mvhd(v, level + 1)
+
+	case MVHD_V1:
+		print_mvhd(v, level + 1)
+
+	case TKHD_V0:
+		print_tkhd(f, v, level + 1)
+
+	case TKHD_V1:
+		print_tkhd(f, v, level + 1)
+
+	case ELST_V0:
+		print_elst(v, level + 1)
+
+	case ELST_V1:
+		print_elst(v, level + 1)
+
+	case:
+		#partial switch box.type {
+		case .name:
+			payload := box.payload.([dynamic]u8)[:]
+			if len(payload) == 0 { return }
+
+			if box.parent.type == .udta {
+				printf(level + 1, "Name: %v\n", string(payload))
 			}
 		}
-	case .tkhd:
-		if len(atom.payload) > 0 {
-			payload := atom.payload[:]
-			version := payload[0]
 
-			switch version {
-			case 0:
-				tkhd := (^TKHD_V0)(raw_data(payload))^
-				print_tkhd(f, tkhd, level + 1)
-			case 1:
-				tkhd := (^TKHD_V1)(raw_data(payload))^
-				print_tkhd(f, tkhd, level + 1)
-			case:
-				unreachable()
+		if box.parent == f.itunes_metadata {
+			if box.type != .itunes_4_dashes {
+				print_itunes_metadata(box.payload.(iTunes_Metadata), level + 1)	
 			}
-		}
-	case .elst:
-		if len(atom.payload) > 0 {
-			payload := atom.payload[:]
-			version := payload[0]
-
-			elst_hdr := (^ELST_Header)(raw_data(payload))^
-			payload   = payload[size_of(ELST_Header):]
-			switch version {
-			case 0:
-				_entries := runtime.Raw_Slice{
-					data = raw_data(payload),
-					len  = int(elst_hdr.entry_count),
-				}
-				entries := transmute([]ELST_Entry_V0)_entries
-				print_elst(f, entries, level + 1)
-			case 1:
-				_entries := runtime.Raw_Slice{
-					data = raw_data(payload),
-					len  = int(elst_hdr.entry_count),
-				}
-				entries := transmute([]ELST_Entry_V1)_entries
-				print_elst(f, entries, level + 1)
-			case:
-				unreachable()
-			}
-		}
-	case .mdhd:
-		if len(atom.payload) > 0 {
-			payload := atom.payload[:]
-			version := payload[0]
-
-			switch version {
-			case 0:
-				mdhd := (^MDHD_V0)(raw_data(payload))^
-				print_mdhd(f, mdhd, level + 1)
-			case 1:
-				mdhd := (^MDHD_V1)(raw_data(payload))^
-				print_mdhd(f, mdhd, level + 1)
-			case:
-				unreachable()
-			}
-		}
-	case .hdlr:
-		print_hdlr(f, atom, level + 1)
-
-	case .name:
-		if atom.parent.type == .udta && len(atom.payload) > 0 {
-			printf(level + 1, "Name: %v\n", string(atom.payload[:]))
-		}
-
-	case .data:
-		if atom.parent != nil && atom.parent.parent != nil && atom.parent.parent == f.itunes_metadata && len(atom.payload) > 0 {
-			print_itunes_metadata(f, atom, level + 1)
 		}
 	}
 
-	if recurse && atom.first_child != nil {
-		print_atom(f, atom.first_child, level + 1, print_siblings, recurse)
+	if recurse && box.first_child != nil {
+		print_box(f, box.first_child, level + 1, print_siblings, recurse)
 	}
 
-	if print_siblings && atom.next != nil {
-		print_atom(f, atom.next, level, print_siblings, recurse)
+	if print_siblings && box.next != nil {
+		print_box(f, box.next, level, print_siblings, recurse)
 	}
 }
 
 print :: proc(f: ^BMFF_File, box: ^BMFF_Box = nil, print_siblings := false, recurse := false) {
 	if box != nil {
-		print_atom(f, box,    0, print_siblings, recurse)
+		print_box(f, box,    0, print_siblings, recurse)
 	} else {
-		print_atom(f, f.root, 0, true, true)
+		print_box(f, f.root, 0, true, true)
 	}
 	
 }
