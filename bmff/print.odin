@@ -21,12 +21,23 @@ print_itunes_metadata :: proc(tag: iTunes_Metadata, level := int(0)) {
 		case .JPEG: printf(level, "Thumbnail Type: JPEG\n")
 		case .PNG:  printf(level, "Thumbnail Type: PNG\n")
 		case:
-			v := tag.data.([dynamic]u8)
-			if common.is_printable(v[:]) {
-				println(level, string(v[:]))
-			} else {
-				println(level, "Bytes:", v)
+			switch v in tag.data {
+			case [dynamic]u8:
+				if common.is_printable(v[:]) {
+					println(level, string(v[:]))
+				} else {
+					println(level, "Bytes:", v)
+				}
+			case iTunes_Track:
+				printf(level, "Track: %v/%v\n", v.current, v.disk_total)
+
+			case iTunes_Disk:
+				printf(level, "Disk:  %v/%v\n", v.current, v.total)
+
+			case cstring:
+				// Already handled above.
 			}
+
 	}
 }
 
@@ -123,6 +134,22 @@ print_hdlr :: proc(hdlr: $T, level := int(0)) {
 	}
 }
 
+print_chpl :: proc(f: ^BMFF_File, chpl: Chapter_List, level := int(0)) {
+	time_scale := f.time_scale if chpl.version == 0 else 10_000_000
+
+	for chapter, i in chpl.chapters {
+		start := f64(chapter.timestamp) / f64(time_scale)
+
+		printf(level, "Chapter #: %v\n", i + 1)
+		printf(level + 1, "Title: %v\n", chapter.title)
+		printf(level + 1, "Start: %.2f seconds\n", start)
+		if i + 1 < len(chpl.chapters) {
+			println(0)
+		}
+	}
+
+}
+
 print_box_header :: proc(box: ^BMFF_Box, level := int(0)) {
 	box_type := fmt.tprintf("UUID: %v", _string(box.uuid)) if box.type == .UUID else _string(box.type)
 	printf(level, "[%v] Pos: %d, Size: %d\n", box_type, box.offset, box.payload_size)
@@ -162,13 +189,16 @@ print_box :: proc(f: ^BMFF_File, box: ^BMFF_Box, level := int(0), print_siblings
 	case ELST_V1:
 		print_elst(v, level + 1)
 
+	case Chapter_List:
+		print_chpl(f, v, level + 1)
+
 	case:
 		#partial switch box.type {
-		case .name:
+		case .Name:
 			payload := box.payload.([dynamic]u8)[:]
 			if len(payload) == 0 { return }
 
-			if box.parent.type == .udta {
+			if box.parent.type == .User_Data {
 				printf(level + 1, "Name: %v\n", string(payload))
 			}
 		}

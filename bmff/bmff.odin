@@ -60,9 +60,18 @@ free_atom :: proc(atom: ^BMFF_Box) {
 		*/
 		case iTunes_Metadata:
 			switch w in v.data {
-			case cstring: delete(w)
+			case cstring:     delete(w)
 			case [dynamic]u8: delete(w)
+
+			case iTunes_Track, iTunes_Disk:
+				// Nothing to do.
 			}
+
+		case Chapter_List:
+			for chapter in v.chapters {
+				delete(chapter.title)
+			}
+			delete(v.chapters)
 
 		/*
 			These are just structs with no allocated items to free.
@@ -70,6 +79,7 @@ free_atom :: proc(atom: ^BMFF_Box) {
 		case MDHD_V0, MDHD_V1:
 		case MVHD_V0, MVHD_V1:
 		case TKHD_V0, TKHD_V1:
+		case iTunes_Track, iTunes_Disk:
 
 		case:
 			unhandled := fmt.tprintf("free_atom: Unhandled payload type: %v\n", v)
@@ -137,9 +147,24 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 					metadata.data = cstring(raw_data(payload))
 
 				case: // Binary, JPEG, PNG, ...
-					metadata.data = [dynamic]u8{}
-					append(&metadata.data.([dynamic]u8), ..payload)
-					delete(payload)
+					#partial switch prev.type {
+					case .iTunes_Track:
+						if len(payload) != size_of(iTunes_Track) { return .Wrong_File_Format }
+						data := (^iTunes_Track)(raw_data(payload))^
+						metadata.data = data
+						delete(payload)
+
+					case .iTunes_Disk:
+						if len(payload) != size_of(iTunes_Disk) { return .Wrong_File_Format }
+						data := (^iTunes_Disk)(raw_data(payload))^
+						metadata.data = data
+						delete(payload)
+
+					case:
+						metadata.data = [dynamic]u8{}
+						append(&metadata.data.([dynamic]u8), ..payload)
+						delete(payload)
+					}
 				}
 
 				box.payload = metadata
@@ -195,7 +220,6 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 				*/
 				if parent.parent == f.itunes_metadata {
 					skip = false
-
 					payload: []u8
 					if payload, ok = common.read_slice(fd, box.payload_size); !ok { return .Read_Error }
 					intern_payload(box, payload)
@@ -359,10 +383,10 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			}
 			box.payload = ftyp
 
-		case .moov:
+		case .Movie:
 			f.moov = box
 
-		case .mvhd:
+		case .Movie_Header:
 			f.mvhd = box
 
 			version: u8
@@ -384,9 +408,9 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 				unreachable()
 			}
 
-		case .trak:
+		case .Track:
 
-		case .tkhd:
+		case .Track_Header:
 			version: u8
 			if version, ok = common.peek_data(fd, u8); !ok { return .Read_Error }
 			if version > 1                                 { return .TKHD_Unknown_Version }
@@ -402,9 +426,9 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 				unreachable()
 			}
 
-		case .edts:
+		case .Edit:
 
-		case .elst:
+		case .Edit_List:
 			version: u8
 			if version, ok = common.peek_data(fd, u8); !ok     { return .Read_Error }
 			if version > 1                                     { return .ELST_Unknown_Version }
@@ -439,9 +463,9 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 				unreachable()
 			}
 
-		case .mdia:
+		case .Media:
 
-		case .mdhd:
+		case .Media_Header:
 			version: u8
 			if version, ok = common.peek_data(fd, u8); !ok { return .Read_Error }
 			if version > 1                                 { return .MDHD_Unknown_Version }
@@ -457,12 +481,12 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 				unreachable()
 			}
 
-		case .hdlr:
+		case .Handler_Reference:
 			/*
 				ISO 14496-12-2015, section 8.4.3.1:
 				`hdlr` may be contained in a `mdia` or `meta` box.
 			*/
-			if !(box.parent.type == .mdia || box.parent.type == .meta) {
+			if !(box.parent.type == .Media || box.parent.type == .Meta) {
 				return .HDLR_Unexpected_Parent
 			}
 			if box.payload_size < size_of(_HDLR)            { return .HDLR_Invalid_Size }
@@ -476,15 +500,12 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			hdlr.name = cstring(raw_data(name_bytes))
 			box.payload = hdlr
 
-		case .udta:
-			if !(   box.parent.type == .moov ||
-					box.parent.type == .moof ||
-					box.parent.type == .trak ||
-					box.parent.type == .traf) {
+		case .User_Data:
+			if !(box.parent.type == .Movie || box.parent.type == .Movie_Fragment || box.parent.type == .Track || box.parent.type == .Track_Fragment) {
 				return .Wrong_File_Format
 			}
 
-		case .meta:
+		case .Meta:
 			payload: []u8
 			if payload, ok = common.read_slice(fd, size_of(META)); !ok { return .Read_Error }
 			intern_payload(box, payload)
@@ -500,8 +521,8 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			} else {
 				skip_box(fd, box) or_return
 			}
-		case .name:
-			if parent.type == .udta {
+		case .Name:
+			if parent.type == .User_Data {
 				payload: []u8
 				if payload, ok = common.read_slice(fd, box.payload_size); !ok { return .Read_Error }
 				intern_payload(box, payload)
@@ -510,13 +531,55 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 				skip_box(fd, box) or_return
 			}
 
+		case .Chapter_List:
+			if parent.type == .User_Data {
+				vf: Version_and_Flags
+				if vf, ok = common.read_data(fd, Version_and_Flags); !ok { return .Read_Error }
+				if vf.version > 1                                        { return .CHPL_Unknown_Version }
+
+				entry_count: u32be
+				short_count: u8
+				reserved:    u8
+
+				if vf.version == 0 {
+					if short_count, ok = common.read_u8(fd); !ok          { return .Read_Error }
+					entry_count        = u32be(short_count)
+				} else {
+					if reserved, ok    = common.read_u8(fd); !ok          { return .Read_Error }
+					if entry_count, ok = common.read_data(fd, u32be); !ok { return .Read_Error }
+				}
+
+				chapter_list := Chapter_List{}
+				for i := u32be(0); i < entry_count; i += 1 {
+					_entry: _Chapter_Entry
+					if _entry, ok = common.read_data(fd, _Chapter_Entry); !ok { return .Read_Error }
+					if title_bytes, _ok := common.read_slice(fd, _entry.title_size, f.allocator); _ok {
+						entry := Chapter_Entry{
+							timestamp = _entry.timestamp,
+							title     = string(title_bytes),
+						}
+						append(&chapter_list.chapters, entry)
+					} else {
+						return .Read_Error
+					}
+				}
+				box.payload = chapter_list
+
+				/*
+					Read cursor should be one past the end of the expected box end.
+				*/
+				if cur_pos, cur_ok := common.get_pos(fd); !(cur_ok && cur_pos == box.end + 1) { return .CHPL_Invalid_Size }
+			} else {
+				skip_box(fd, box) or_return
+			}
+
+		case .Media_Data:
+			f.mdat = box
+			skip_box(fd, box) or_return
+
 		/*
 			Boxes we don't (want to or can yet) parse, we skip.
 		*/
-		case .mdat:
-			f.mdat = box
-			skip_box(fd, box) or_return
-			
 		case:
 			if box.end >= i64(f.root.size) { break loop }
 			skip_box(fd, box) or_return

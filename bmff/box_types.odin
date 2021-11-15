@@ -49,7 +49,10 @@ Payload_Types :: union {
 	MDHD_V0, MDHD_V1,
 	TKHD_V0, TKHD_V1,
 
+	Chapter_List,
 	iTunes_Metadata,
+	iTunes_Track,
+	iTunes_Disk,
 }
 
 BMFF_Box :: struct {
@@ -247,5 +250,40 @@ iTunes_Metadata :: struct {
 	data: union {
 		[dynamic]u8, // Binary, JPEG, PNG and unknown sub-types
 		cstring,     // Text
+		iTunes_Track,
+		iTunes_Disk,
 	},
+}
+
+iTunes_Track :: struct #packed {
+	_reserved:  u16be,
+	current:    u16be,
+	disk_total: u16be,
+	set_total:  u16be,
+}
+
+iTunes_Disk  :: struct #packed {
+	_reserved: u16be,
+	current:   u16be,
+	total:     u16be,
+}
+
+/*
+	Chapter list, orinally from the F4V format.
+	Not part of original ISO spec.
+*/
+_Chapter_Entry :: struct #packed {
+	timestamp:   u64be,
+	title_size:  u8,
+}
+
+Chapter_Entry :: struct #packed {
+	timestamp:   u64be,
+	title:       string,
+}
+
+Chapter_List :: struct {
+	using _vf:   Version_and_Flags,
+	_reserved:   u8,
+	chapters:    [dynamic]Chapter_Entry,
 }
