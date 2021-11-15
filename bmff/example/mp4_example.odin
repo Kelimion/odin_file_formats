@@ -8,7 +8,7 @@ package iso_bmff_example
 import "core:mem"
 import "core:os"
 import "core:fmt"
-import isom ".."
+import bmff ".."
 
 parse_metadata := true
 
@@ -24,8 +24,8 @@ _main :: proc() {
 	}
 
 	file := os.args[1]
-	f, err := isom.open(file)
-	defer isom.close(f)
+	f, err := bmff.open(file)
+	defer bmff.close(f)
 
 	if err != .None {
 		printf("Couldn't open '%v'\n", file)
@@ -38,15 +38,15 @@ _main :: proc() {
 	printf("\tModified:  %v\n", f.file_info.modification_time)
 
 	println("\n-=-=-=-=-=-=- PARSED FILE -=-=-=-=-=-=-")
-	e := isom.parse(f, parse_metadata)
-	isom.print(f)
+	e := bmff.parse(f, parse_metadata)
+	bmff.print(f)
 	println("\n-=-=-=-=-=-=- PARSED FILE -=-=-=-=-=-=-")
 	printf("Parse Error: %v\n\n", e)
 
 	when false {
 		println("----")
-		for v in isom.FourCC {
-			printf("[%v]: 0x%08x\n", isom._string(v), int(v))
+		for v in bmff.FourCC {
+			printf("[%v]: 0x%08x\n", bmff._string(v), int(v))
 		}
 	}
 }

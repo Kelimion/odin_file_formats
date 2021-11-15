@@ -14,6 +14,9 @@ package iso_bmff
 
 import "core:time"
 import "../common"
+import "core:runtime"
+import "core:reflect"
+import "core:fmt"
 
 _string_common :: common._string
 
@@ -36,10 +39,53 @@ _string :: proc(type: $T) -> (res: string) {
 
 		return string(buffer[:3])
 	} else when T == FourCC {
-		if type == ._file_root {
-			return "_file_root"
+		has_prefix :: proc(s, prefix: string) -> bool {
+			return len(s) >= len(prefix) && s[0:len(prefix)] == prefix
 		}
-		return _string_common(common.FourCC(type))
+
+		if type == .Root {
+			return "<ROOT>"
+		}
+		id := runtime.typeid_base(typeid_of(FourCC))
+		type_info := type_info_of(id)
+
+		buffer := PRINT_BUFFER[:]
+		name:     string
+
+		#partial switch e in type_info.variant {
+		case runtime.Type_Info_Enum:
+			Enum_Value :: runtime.Type_Info_Enum_Value
+
+			ev_, _ := reflect.as_i64(type)
+			ev := Enum_Value(ev_)
+
+			for val, idx in e.values {
+				if val == ev {
+					name = fmt.bprintf(buffer[:], "%v", e.names[idx])
+					if has_prefix(name, "iTunes") {
+						buffer[6] = ':'
+					}
+					for v, i in name {
+						if v == '_' {
+							buffer[i] = ' '
+						}
+					}
+					return name
+
+				}
+			}
+		}
+
+		temp := transmute([4]u8)type
+		/*
+			We could do `string(t[:4])`, but this also handles e.g. `©too`.
+		*/
+		if common.is_printable(temp[:]) {
+			return fmt.bprintf(buffer[:], "%c%c%c%c 0x%08x", temp[0], temp[1], temp[2], temp[3], i64(type))
+		} else {
+			return fmt.bprintf(buffer[:], "0x%08x",          i64(type))
+		}
+
 	} else when T == UUID {
 		return _string_common(type)
 	} else {

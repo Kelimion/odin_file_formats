@@ -124,11 +124,8 @@ print_hdlr :: proc(hdlr: $T, level := int(0)) {
 }
 
 print_box_header :: proc(box: ^BMFF_Box, level := int(0)) {
-	if box.type == .uuid {
-		printf(level, "[uuid (%v] Pos: %d. Size: %d\n", _string(box.uuid), box.offset, box.payload_size)
-	} else {
-		printf(level, "[%v (0x%08x)] Pos: %d. Size: %d\n", _string(box.type), int(box.type), box.offset, box.payload_size)
-	}
+	box_type := fmt.tprintf("UUID: %v", _string(box.uuid)) if box.type == .UUID else _string(box.type)
+	printf(level, "[%v] Pos: %d, Size: %d\n", box_type, box.offset, box.payload_size)
 }
 
 print_box :: proc(f: ^BMFF_File, box: ^BMFF_Box, level := int(0), print_siblings := false, recurse := false) {
@@ -177,7 +174,7 @@ print_box :: proc(f: ^BMFF_File, box: ^BMFF_Box, level := int(0), print_siblings
 		}
 
 		if box.parent == f.itunes_metadata {
-			if box.type != .itunes_4_dashes {
+			if box.type != .iTunes_Extended {
 				print_itunes_metadata(box.payload.(iTunes_Metadata), level + 1)	
 			}
 		}

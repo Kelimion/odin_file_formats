@@ -23,11 +23,10 @@ UUID_RFC_4122 :: struct {
 FourCC :: distinct u32be
 
 _string :: proc(type: $T) -> (res: string) {
-	buffer := PRINT_BUFFER[:]
-
 	/* 6ba7b810-9dad-11d1-80b4-00c04fd430c8 */
 
 	when T == UUID_RFC_4122 {
+		buffer := PRINT_BUFFER[:]
 		using type
 		return bprintf(
 			buffer[:], "%06x-%02x-%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
@@ -39,6 +38,7 @@ _string :: proc(type: $T) -> (res: string) {
 			node[0], node[1], node[2], node[3], node[4], node[5],
 		)
 	} else when T == FourCC {
+		buffer := PRINT_BUFFER[:]
 
 		temp := transmute([4]u8)type
 		/*

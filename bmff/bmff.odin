@@ -120,7 +120,7 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 			Create box and set type, size, parent, etc.
 		*/
 		#partial switch h.type {
-		case .data:
+		case .Data:
 			if parent == f.itunes_metadata {
 				/*
 					Fold data into parent.
@@ -150,7 +150,7 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 
 			parent = prev
 
-		case .itunes_mean:
+		case .iTunes_Mean:
 			parent = prev
 		case:
 			parent = f.itunes_metadata
@@ -183,7 +183,7 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 		}
 
 		#partial switch box.type {
-		case .data:
+		case .Data:
 			/*
 				Apple iTunes mdir metadata tag.
 				Found as a child of the various tags under: `moov.udta.meta.ilst`
@@ -206,7 +206,7 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 				skip_box(fd, box) or_return
 			}
 
-		case .itunes_4_dashes:
+		case .iTunes_Extended:
 			payload: []u8
 			if payload, ok = common.read_slice(fd, box.payload_size); !ok { return .Read_Error }
 			intern_payload(box, payload)
@@ -239,7 +239,7 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 		Most files start with an 'ftyp' atom.
 	*/
 	h = read_box_header(fd=fd, read=false) or_return
-	if h.type != .ftyp {
+	if h.type != .File_Type {
 		/*
 			NOTE(Jeroen):
 				Files with no file‐type box should be read as if they contained an FTYP box with	
@@ -247,7 +247,7 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 		*/
 		box = new(BMFF_Box)
 		box.size           = 0
-		box.type           = .ftyp
+		box.type           = .File_Type
 		box.parent         = f.root
 		f.root.first_child = box
 
@@ -325,7 +325,7 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 		}
 
 		#partial switch h.type {
-		case .ftyp:
+		case .File_Type:
 			/*
 				`ftyp` must always be the first child and we can't have two nodes of this type.
 			*/
@@ -489,7 +489,7 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			if payload, ok = common.read_slice(fd, size_of(META)); !ok { return .Read_Error }
 			intern_payload(box, payload)
 
-		case .ilst:
+		case .iTunes_Metadata:
 			f.itunes_metadata = box
 
 			if parse_metadata {
@@ -574,7 +574,7 @@ read_box_header :: #force_inline proc(fd: os.Handle, read := true) -> (header: B
 
 	header.end = header.offset + header.size - 1
 
-	if header.type == .uuid {
+	if header.type == .UUID {
 		/*
 			Read extended type.
 		*/
@@ -647,7 +647,7 @@ open_from_handle :: proc(handle: os.Handle, allocator := context.allocator) -> (
 	file.root.offset         = 0
 	file.root.size           = file.file_info.size
 	file.root.end            = file.file_info.size - 1
-	file.root.type           = ._file_root
+	file.root.type           = .Root
 	file.root.payload_offset = 0
 	file.root.payload_size   = file.file_info.size
 
