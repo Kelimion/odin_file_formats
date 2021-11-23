@@ -1294,6 +1294,264 @@ EBML_ID :: enum u64be {
 	CueRefTime                         = 0x96,
 
 
+	/*
+		Contain attached files.
+
+		Described in Section 8.1.6 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Segment_Attachment                 = 0x1941A469,
+
+	/*
+		An attached file.
+
+		Described in Section 8.1.6.1 of IETF draft-ietf-cellar-matroska-08
+	*/
+	AttachedFile                       = 0x61A7,
+
+	/*
+		A human-friendly name for the attached file.
+
+		Described in Section 8.1.6.1.1 of IETF draft-ietf-cellar-matroska-08
+	*/
+	FileDescription                    = 0x467E,
+
+	/*
+		Filename of the attached file.
+
+		Described in Section 8.1.6.1.2 of IETF draft-ietf-cellar-matroska-08
+	*/
+	FileName                           = 0x466E,
+
+	/*
+		MIME type of the file.
+
+		Described in Section 8.1.6.1.3 of IETF draft-ietf-cellar-matroska-08
+	*/
+	FileMimeType                       = 0x4660,
+
+	/*
+		The data of the file.
+
+		Described in Section 8.1.6.1.4 of IETF draft-ietf-cellar-matroska-08
+	*/
+	FileData                           = 0x465C,
+
+	/*
+		Unique ID representing the file, as random as possible.
+
+		Described in Section 8.1.6.1.5 of IETF draft-ietf-cellar-matroska-08
+	*/
+	FileUID                            = 0x46AE,
+
+	/*
+		A system to define basic menus and partition data. For more detailed information,
+		look at the Chapters explanation in Section 22.
+
+		Described in Section 8.1.7 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Chapters                           = 0x1043A770,
+
+	/*
+		Contains all information about a Segment edition.
+
+		Described in Section 8.1.7.1 of IETF draft-ietf-cellar-matroska-08
+	*/
+	EditionEntry                       = 0x45B9,
+
+	/*
+		A unique ID to identify the edition. It's useful for tagging an edition.
+
+		Described in Section 8.1.7.1.1 of IETF draft-ietf-cellar-matroska-08
+	*/
+	EditionUID                         = 0x45BC,
+
+	/*
+		Set to 1 if an edition is hidden. Hidden editions **SHOULD NOT** be available to the user interface.
+
+		Described in https://www.matroska.org/technical/elements.html
+	*/
+	EditionFlagHidden                  = 0x45BD,
+
+	/*
+		Set to 1 if the edition SHOULD be used as the default one.
+
+		Described in Section 8.1.7.1.2 of IETF draft-ietf-cellar-matroska-08
+	*/
+	EditionFlagDefault                 = 0x45DB,
+
+	/*
+		Set to 1 if the chapters can be defined multiple times and the order to play them is enforced; see Section 22.1.3.
+
+		Described in Section 8.1.7.1.3 of IETF draft-ietf-cellar-matroska-08
+	*/
+	EditionFlagOrdered                 = 0x45DD,
+
+	/*
+		Contains the atom information to use as the chapter atom (apply to all tracks).
+
+		Described in Section 8.1.7.1.4 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterAtom                        = 0xB6,
+
+	/*
+		A unique ID to identify the Chapter.
+
+		Described in Section 8.1.7.1.4.1 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterUID                         = 0x73C4,
+
+	/*
+		A unique string ID to identify the Chapter. Use for WebVTT cue identifier storage [WebVTT].
+
+		Described in Section 8.1.7.1.4.2 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterStringUID                   = 0x5654,
+
+	/*
+		Timestamp of the start of Chapter (not scaled).
+
+		Described in Section 8.1.7.1.4.3 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterTimeStart                   = 0x91,
+
+	/*
+		Timestamp of the end of Chapter (timestamp excluded, not scaled).
+		The value MUST be strictly greater than the ChapterTimeStart of the same ChapterAtom.
+
+		Described in Section 8.1.7.1.4.4 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterTimeEnd                     = 0x92,
+
+	/*
+		Set to 1 if a chapter is hidden. Hidden chapters it SHOULD NOT be available to the user interface
+		(but still to Control Tracks; see Section 22.2.3 on Chapter flags).
+
+		Described in Section 8.1.7.1.4.5 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterFlagHidden                  = 0x98,
+
+	/*
+		Set to 1 if the chapter is enabled. It can be enabled/disabled by a Control Track.
+		When disabled, the movie **SHOULD** skip all the content between the TimeStart and TimeEnd of this chapter;
+		see notes on Chapter flags.
+
+		Described in https://www.matroska.org/technical/elements.html
+	*/
+	ChapterFlagEnabled                 = 0x4598,
+
+	/*
+		The SegmentUID of another Segment to play during this chapter.
+
+		Described in Section 8.1.7.1.4.6 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterSegmentUID                  = 0x6E67,
+
+	/*
+		The EditionUID to play from the Segment linked in ChapterSegmentUID.
+		If ChapterSegmentEditionUID is undeclared, then no Edition of the linked Segment is used;
+		see Section 19.2 on medium-linking Segments.
+
+		Described in Section 8.1.7.1.4.7 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterSegmentEditionUID           = 0x6EBC,
+
+	/*
+		Specify the physical equivalent of this ChapterAtom like "DVD" (60) or "SIDE" (50);
+		see Section 22.4 for a complete list of values.
+
+		Described in Section 8.1.7.1.4.8 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterPhysicalEquiv               = 0x63C3,
+
+	/*
+		Contains all possible strings to use for the chapter display.
+
+		Described in Section 8.1.7.1.4.9 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapterDisplay                     = 0x80,
+
+	/*
+		Contains the string to use as the chapter atom.
+
+		Described in Section 8.1.7.1.4.10 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapString                         = 0x85,
+
+	/*
+		A language corresponding to the string, in the bibliographic ISO-639-2 form [ISO639-2].
+		This Element MUST be ignored if a ChapLanguageIETF Element is used within the same ChapterDisplay Element.
+
+		Described in Section 8.1.7.1.4.11 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapLanguage                       = 0x437C,
+
+	/*
+		Specifies a language corresponding to the ChapString in the format defined in [BCP47]
+		and using the IANA Language Subtag Registry [IANALangRegistry].
+		If a ChapLanguageIETF Element is used, then any ChapLanguage and ChapCountry Elements used in the same
+		ChapterDisplay MUST be ignored.
+
+		Described in Section 8.1.7.1.4.12 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapLanguageIETF                   = 0x437D,
+
+	/*
+		A country corresponding to the string, using the same 2 octets country-codes as in Internet domains
+		[IANADomains] based on [ISO3166-1] alpha-2 codes. This Element MUST be ignored if a ChapLanguageIETF
+		Element is used within the same ChapterDisplay Element.
+
+		Described in Section 8.1.7.1.4.13 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapCountry                        = 0x437E,
+
+	/*
+		Contains all the commands associated to the Atom.
+
+		Described in Section 8.1.7.1.4.14 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapProcess                        = 0x6944,
+
+	/*
+		Contains the type of the codec used for the processing. A value of 0 means native Matroska processing
+		(to be defined), a value of 1 means the DVD command set is used; see Section 22.3 on DVD menus.
+		More codec IDs can be added later.
+
+		Described in Section 8.1.7.1.4.15 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapProcessCodecID                 = 0x6955,
+
+	/*
+		Some optional data attached to the ChapProcessCodecID information. For ChapProcessCodecID = 1,
+		it is the "DVD level" equivalent; see Section 22.3 on DVD menus.
+
+		Described in Section 8.1.7.1.4.16 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapProcessPrivate                 = 0x450D,
+
+	/*
+		Contains all the commands associated to the Atom.
+
+		Described in Section 8.1.7.1.4.17 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapProcessCommand                 = 0x6911,
+
+	/*
+		Defines when the process command SHOULD be handled.
+
+		Described in Section 8.1.7.1.4.18 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapProcessTime                    = 0x6922,
+
+	/*
+		Contains the command information. The data SHOULD be interpreted depending on the ChapProcessCodecID value.
+		For ChapProcessCodecID = 1, the data correspond to the binary DVD cell pre/post commands;
+		see Section 22.3 on DVD menus.
+
+		Described in Section 8.1.7.1.4.19 of IETF draft-ietf-cellar-matroska-08
+	*/
+	ChapProcessData                    = 0x6933,
+
+
 
 
 }
