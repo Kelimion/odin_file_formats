@@ -98,7 +98,7 @@ print_element :: proc(f: ^EBML_File, element: ^EBML_Element, level := int(0), pr
 		case .Binary:
 			if val, ok := element.payload.([dynamic]u8); ok {
 				#partial switch element.id {
-				case .SeekID:
+				case .Matroska_SeekID:
 					seek_id := u64be(0)
 					for v in val {
 						seek_id <<= 8
@@ -115,13 +115,13 @@ print_element :: proc(f: ^EBML_File, element: ^EBML_Element, level := int(0), pr
 				}
 			}
 
-		case .UUID:
-			if uuid, ok := element.payload.(UUID); ok {
+		case .Matroska_UUID:
+			if uuid, ok := element.payload.(Matroska_UUID); ok {
 				printf(level + 1, "UUID: %v\n", _string_common(uuid))
 			}
 
-		case .Time:
-			if datetime, ok := element.payload.(Time); ok {
+		case .Matroska_Time:
+			if datetime, ok := element.payload.(Matroska_Time); ok {
 				printf(level + 1, "Time: %v\n", datetime)
 			}
 
