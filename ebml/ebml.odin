@@ -2153,7 +2153,7 @@ parse :: proc(f: ^EBML_File, parse_metadata := true, skip_clusters := true, retu
 		/*
 			WebM parse.
 		*/
-		fallthrough
+		parse_matroska(f, document, skip_clusters) or_return
 
 	case:
 		/*
