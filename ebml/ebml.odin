@@ -552,8 +552,6 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 		id,     id_size     = read_variable_id(f) or_return
 		length, length_size = read_variable_int(f) or_return
 
-		if id == .Matroska_Cluster { return .None }
-
 		if id == .EBML {
 			/*
 				New EBML stream starting.
@@ -1085,7 +1083,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			skip_binary(f, length, this) or_return
 
-		case .Matroska_TrackEntry_Name:
+		case .Matroska_Track_Name:
 			/*
 				A human-readable track name.
 
@@ -1093,7 +1091,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_utf8(f, length, this) or_return
 
-		case .Matroska_TrackEntry_Language:
+		case .Matroska_Language:
 			/*
 				Specifies the language of the track in the Matroska languages form; see Section 6 on language codes.
 				This Element MUST be ignored if the LanguageIETF Element is used in the same TrackEntry.
@@ -1102,7 +1100,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_utf8(f, length, this) or_return
 
-		case .Matroska_TrackEntry_Language_IETF:
+		case .Matroska_Language_IETF:
 			/*
 				Specifies the language of the track according to [BCP47] and using the IANA Language Subtag Registry
 				[IANALangRegistry]. If this Element is used, then any Language Elements used in the same TrackEntry
@@ -1112,7 +1110,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_string(f, length, this) or_return
 
-		case .Matroska_TrackEntry_CodecID:
+		case .Matroska_CodecID:
 			/*
 				An ID corresponding to the codec, see [MatroskaCodec] for more info.
 
@@ -1120,7 +1118,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_string(f, length, this) or_return
 
-		case .Matroska_TrackEntry_CodecPrivate:
+		case .Matroska_CodecPrivate:
 			/*
 				Private data only known to the codec.
 
@@ -1128,7 +1126,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			skip_binary(f, length, this) or_return
 
-		case .Matroska_TrackEntry_CodecName:
+		case .Matroska_CodecName:
 			/*
 				A human-readable string specifying the codec.
 
@@ -1136,7 +1134,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_utf8(f, length, this) or_return
 
-		case .Matroska_TrackEntry_AttachmentLink:
+		case .Matroska_AttachmentLink:
 			/*
 				The UID of an attachment that is used by this codec.
 
@@ -1144,7 +1142,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_TrackEntry_TrackOverlay:
+		case .Matroska_TrackOverlay:
 			/*
 				Specify that this track is an overlay track for the Track specified (in the u-integer).
 				That means when this track has a gap, see Section 26.3.1 on SilentTracks, the overlay track
@@ -1154,7 +1152,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_TrackEntry_CodecDelay:
+		case .Matroska_CodecDelay:
 			/*
 				CodecDelay is The codec-built-in delay in nanoseconds. This value MUST be subtracted from each block
 				timestamp in order to get the actual timestamp. The value SHOULD be small so the muxing of tracks with
@@ -1207,7 +1205,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			skip_binary(f, length, this) or_return
 
-		case .Matroska_TrackEntry_Video:
+		case .Matroska_Video:
 			/*
 				Video settings.
 
@@ -1215,7 +1213,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			this.type        = .Master
 
-		case .Matroska_Video_FlagInterlaced:
+		case .Matroska_FlagInterlaced:
 			/*
 				Specify whether the video frames in this track are interlaced or not.
 
@@ -1223,7 +1221,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Video_FieldOrder:
+		case .Matroska_FieldOrder:
 			/*
 				Specify the field ordering of video frames in this track.
 
@@ -1231,7 +1229,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Video_StereoMode:
+		case .Matroska_StereoMode:
 			/*
 				Stereo-3D video mode. There are some more details in Section 20.10.
 
@@ -1239,7 +1237,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Video_AlphaMode:
+		case .Matroska_AlphaMode:
 			/*
 				Alpha Video Mode. Presence of this Element indicates that the BlockAdditional Element could contain Alpha data.
 
@@ -1247,7 +1245,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Video_PixelWidth, .Matroska_Video_PixelHeight:
+		case .Matroska_PixelWidth, .Matroska_PixelHeight:
 			/*
 				Width, Height of the encoded video frames in pixels.
 
@@ -1255,7 +1253,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Video_PixelCropBottom, .Matroska_Video_PixelCropTop, .Matroska_Video_PixelCropLeft, .Matroska_Video_PixelCropRight:
+		case .Matroska_PixelCropBottom, .Matroska_PixelCropTop, .Matroska_PixelCropLeft, .Matroska_PixelCropRight:
 			/*
 				Crops.
 
@@ -1263,7 +1261,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Video_DisplayWidth, .Matroska_Video_DisplayHeight:
+		case .Matroska_DisplayWidth, .Matroska_DisplayHeight:
 			/*
 				Display Width + Height
 
@@ -1271,7 +1269,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Video_DisplayUnit:
+		case .Matroska_DisplayUnit:
 			/*
 				How DisplayWidth & DisplayHeight are interpreted.
 
@@ -1279,7 +1277,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Video_ColourSpace:
+		case .Matroska_ColourSpace:
 			/*
 				Specify the pixel format used for the Track's data as a FourCC.
 				This value is similar in scope to the biCompression value of AVI's BITMAPINFOHEADER.
@@ -1288,7 +1286,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			skip_binary(f, length, this) or_return
 
-		case .Matroska_Video_Colour:
+		case .Matroska_Colour:
 			/*
 				Settings describing the colour format.
 
@@ -1296,7 +1294,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			this.type        = .Master
 
-		case .Matroska_Colour_MatrixCoefficients:
+		case .Matroska_MatrixCoefficients:
 			/*
 				The Matrix Coefficients of the video used to derive luma and chroma values from
 				red, green, and blue color primaries. For clarity, the value and meanings for
@@ -1306,9 +1304,9 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Colour_ChromaSubsamplingHorz, .Matroska_Colour_ChromaSubsamplingVert,
-			 .Matroska_CbSubsamplingHorz,            .Matroska_CbSubsamplingVert,
-			 .Matroska_ChromaSitingHorz,             .Matroska_ChromaSitingVert:
+		case .Matroska_ChromaSubsamplingHorz, .Matroska_ChromaSubsamplingVert,
+			 .Matroska_CbSubsamplingHorz,     .Matroska_CbSubsamplingVert,
+			 .Matroska_ChromaSitingHorz,      .Matroska_ChromaSitingVert:
 			/*
 				The amount of pixels to remove in the Cr and Cb channels for every pixel not removed horizontally.
 				Example: For video with 4:2:0 chroma subsampling, the ChromaSubsamplingHorz SHOULD be set to 1.
@@ -1320,7 +1318,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Colour_Range:
+		case .Matroska_Range:
 			/*
 				Clipping of the color ranges.
 
@@ -1328,7 +1326,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Colour_TransferCharacteristics, .Matroska_Colour_Primaries:
+		case .Matroska_TransferCharacteristics, .Matroska_Primaries:
 			/*
 				The transfer characteristics of the video. For clarity, the value and meanings for
 				TransferCharacteristics are adopted from Table 3 of ISO/IEC 23091-4 or ITU-T H.273.
@@ -1340,7 +1338,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Colour_MaxCLL, .Matroska_Colour_MaxFALL:
+		case .Matroska_MaxCLL, .Matroska_MaxFALL:
 			/*
 				Maximum brightness of a single pixel (Maximum Content Light Level) in candelas per square meter (cd/m2).
 				Maximum brightness of a single full frame (Maximum Frame-Average Light Level) in candelas per square meter (cd/m2).
@@ -1349,7 +1347,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Colour_MasteringMetadata:
+		case .Matroska_MasteringMetadata:
 			/*
 				SMPTE 2086 mastering data.
 
@@ -1376,7 +1374,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_float(f, length, this) or_return
 
-		case .Matroska_Video_Projection:
+		case .Matroska_Projection:
 			/*
 				Describes the video projection details. Used to render spherical and VR videos.
 
@@ -1384,7 +1382,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			this.type        = .Master
 
-		case .Matroska_Video_ProjectionType:
+		case .Matroska_ProjectionType:
 			/*
 				Describes the projection used for this video track.
 
@@ -1392,7 +1390,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Video_ProjectionPrivate:
+		case .Matroska_ProjectionPrivate:
 			/*
 				Private data that only applies to a specific projection.
 
@@ -1400,7 +1398,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			skip_binary(f, length, this) or_return
 
-		case .Matroska_Video_ProjectionPoseYaw, .Matroska_Video_ProjectionPosePitch, .Matroska_Video_ProjectionPoseRoll:
+		case .Matroska_ProjectionPoseYaw, .Matroska_ProjectionPosePitch, .Matroska_ProjectionPoseRoll:
 			/*
 				Projection vector rotation.
 
@@ -1416,7 +1414,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			this.type        = .Master
 
-		case .Matroska_Audio_SamplingFrequency:
+		case .Matroska_SamplingFrequency:
 			/*
 				Sampling Frequency.
 
@@ -1424,7 +1422,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_float(f, length, this) or_return
 
-		case .Matroska_Audio_OutputSamplingFrequency:
+		case .Matroska_OutputSamplingFrequency:
 			/*
 				Real output sampling frequency in Hz (used for SBR techniques).
 
@@ -1432,7 +1430,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_float(f, length, this) or_return
 
-		case .Matroska_Audio_Channels, .Matroska_Audio_BitDepth:
+		case .Matroska_Channels, .Matroska_BitDepth:
 			/*
 				Channel count, bit depth.
 
@@ -1440,7 +1438,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Track_Operation, .Matroska_TrackCombinePlanes, .Matroska_TrackPlane:
+		case .Matroska_TrackOperation, .Matroska_TrackCombinePlanes, .Matroska_TrackPlane:
 			/*
 				Operation that needs to be applied on tracks to create this virtual track.
 				For more details look at Section 20.8.
@@ -1571,7 +1569,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-		case .Matroska_Segment_Cues:
+		case .Matroska_Cues:
 			/*
 				A Top-Level Element to speed seeking access. All entries are local to the Segment.
 
@@ -1955,7 +1953,6 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			*/
 			intern_uint(f, length, this) or_return
 
-
 		case .Matroska_ChapProcessData:
 			/*
 				Contains the command information. The data SHOULD be interpreted depending on the ChapProcessCodecID value.
@@ -1991,6 +1988,114 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 				Described in Section 8.1.8.1.1 of IETF draft-ietf-cellar-matroska-08
 			*/
 			this.type = .Master
+
+		case .Matroska_TargetTypeValue:
+			/*
+				A number to indicate the logical level of the target.
+
+				Described in Section 8.1.8.1.1.1 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_uint(f, length, this) or_return
+
+		case .Matroska_TargetType:
+			/*
+				An informational string that can be used to display the logical level of the target like
+				"ALBUM", "TRACK", "MOVIE", "CHAPTER", etc ; see Section 6.4 of [MatroskaTags].
+
+				Described in Section 8.1.8.1.1.2 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_string(f, length, this) or_return
+
+		case .Matroska_TagTrackUID:
+			/*
+				A unique ID to identify the Track(s) the tags belong to.
+
+				Described in Section 8.1.8.1.1.3 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_uint(f, length, this) or_return
+
+		case .Matroska_TagEditionUID:
+			/*
+				A unique ID to identify the EditionEntry(s) the tags belong to.
+
+				Described in Section 8.1.8.1.1.4 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_uint(f, length, this) or_return
+
+		case .Matroska_TagChapterUID:
+			/*
+				A unique ID to identify the Chapter(s) the tags belong to.
+
+				Described in Section 8.1.8.1.1.5 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_uint(f, length, this) or_return
+
+		case .Matroska_TagAttachmentUID:
+			/*
+				A unique ID to identify the Attachment(s) the tags belong to.
+
+				Described in Section 8.1.8.1.1.6 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_uint(f, length, this) or_return
+
+		case .Matroska_SimpleTag:
+			/*
+				Contains general information about the target.
+
+				Described in Section 8.1.8.1.2 of IETF draft-ietf-cellar-matroska-08
+			*/
+			this.type = .Master
+
+		case .Matroska_TagName:
+			/*
+				The name of the Tag that is going to be stored.
+
+				Described in Section 8.1.8.1.2.1 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_utf8(f, length, this) or_return
+
+		case .Matroska_TagLanguage:
+			/*
+				Specifies the language of the tag specified, in the Matroska languages form; see Section 6 on language codes.
+				This Element MUST be ignored if the TagLanguageIETF Element is used within the same SimpleTag Element.
+
+				Described in Section 8.1.8.1.2.2 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_string(f, length, this) or_return
+
+		case .Matroska_TagLanguageIETF:
+			/*
+				Specifies the language used in the TagString according to [BCP47] and using the IANA Language Subtag Registry
+				[IANALangRegistry]. If this Element is used, then any TagLanguage Elements used in the same SimpleTag MUST be ignored.
+
+				Described in Section 8.1.8.1.2.3 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_string(f, length, this) or_return
+
+		case .Matroska_TagDefault:
+			/*
+				A boolean value to indicate if this is the default/original language to use for the given tag.
+
+				Described in Section 8.1.8.1.2.4 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_uint(f, length, this) or_return
+
+		case .Matroska_TagString:
+			/*
+				The value of the Tag.
+
+				Described in Section 8.1.8.1.2.5 of IETF draft-ietf-cellar-matroska-08
+			*/
+			intern_utf8(f, length, this) or_return
+
+		case .Matroska_TagBinary:
+			/*
+				The values of the Tag, if it is binary. Note that this cannot be used in the same SimpleTag as TagString.
+
+				Described in Section 8.1.8.1.2.6 of IETF draft-ietf-cellar-matroska-08
+			*/
+			skip_binary(f, length, this) or_return
+
 
 		case .Void:
 			/*

@@ -769,7 +769,7 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.20 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_Name                    = 0x536E,
+	Matroska_Track_Name                         = 0x536E,
 
 	/*
 		Specifies the language of the track in the Matroska languages form; see Section 6 on language codes.
@@ -777,7 +777,7 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.21 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_Language                = 0x22B59C,
+	Matroska_Language                           = 0x22B59C,
 
 	/*
 		Specifies the language of the track according to [BCP47] and using the IANA Language Subtag Registry
@@ -786,35 +786,35 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.22 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_Language_IETF           = 0x22B59D,
+	Matroska_Language_IETF                      = 0x22B59D,
 
 	/*
 		An ID corresponding to the codec, see [MatroskaCodec] for more info.
 
 		Described in Section 8.1.4.1.23 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_CodecID                 = 0x86,
+	Matroska_CodecID                            = 0x86,
 
 	/*
 		Private data only known to the codec.
 
 		Described in Section 8.1.4.1.24 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_CodecPrivate            = 0x63A2,
+	Matroska_CodecPrivate                       = 0x63A2,
 
 	/*
 		A human-readable string specifying the codec.
 
 		Described in Section 8.1.4.1.25 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_CodecName               = 0x258688,
+	Matroska_CodecName                          = 0x258688,
 
 	/*
 		The UID of an attachment that is used by this codec.
 
 		Described in Section 8.1.4.1.26 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_AttachmentLink          = 0x7446,
+	Matroska_AttachmentLink                     = 0x7446,
 
 	/*
 		Specify that this track is an overlay track for the Track specified (in the u-integer).
@@ -823,7 +823,7 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.27 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_TrackOverlay            = 0x6FAB,
+	Matroska_TrackOverlay                       = 0x6FAB,
 
 	/*
 		CodecDelay is The codec-built-in delay in nanoseconds. This value MUST be subtracted from each block
@@ -832,7 +832,7 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.28 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_CodecDelay              = 0x56AA,
+	Matroska_CodecDelay                         = 0x56AA,
 
 	/*
 		After a discontinuity, SeekPreRoll is the duration in nanoseconds of the data the decoder
@@ -877,62 +877,62 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.31 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_TrackEntry_Video                   = 0xE0,
+	Matroska_Video                              = 0xE0,
 
 	/*
 		Specify whether the video frames in this track are interlaced or not.
 
 		Described in Section 8.1.4.1.31.1 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_FlagInterlaced               = 0x9A,
+	Matroska_FlagInterlaced                     = 0x9A,
 
 	/*
 		Specify the field ordering of video frames in this track.
 
 		Described in Section 8.1.4.1.31.2 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_FieldOrder                   = 0x9D,
+	Matroska_FieldOrder                         = 0x9D,
 
 	/*
 		Stereo-3D video mode. There are some more details in Section 20.10.
 
 		Described in Section 8.1.4.1.31.3 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_StereoMode                   = 0x53B8,
+	Matroska_StereoMode                         = 0x53B8,
 
 	/*
 		Alpha Video Mode. Presence of this Element indicates that the BlockAdditional Element could contain Alpha data.
 
 		Described in Section 8.1.4.1.31.4 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_AlphaMode                    = 0x53C0,
+	Matroska_AlphaMode                          = 0x53C0,
 
 	/*
 		Width, Height of the encoded video frames in pixels.
 
 		Described in Section 8.1.4.1.31.5 .. 6 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_PixelWidth                   = 0xB0,
-	Matroska_Video_PixelHeight                  = 0xBA,
+	Matroska_PixelWidth                         = 0xB0,
+	Matroska_PixelHeight                        = 0xBA,
 
 	/*
 		The number of video pixels to remove at the bottom, top, left, right of the image.
 
 		Described in Section 8.1.4.1.31.7 .. 10 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_PixelCropBottom              = 0x54AA,
-	Matroska_Video_PixelCropTop                 = 0x54BB,
-	Matroska_Video_PixelCropLeft                = 0x54CC,
-	Matroska_Video_PixelCropRight               = 0x54DD,
+	Matroska_PixelCropBottom                    = 0x54AA,
+	Matroska_PixelCropTop                       = 0x54BB,
+	Matroska_PixelCropLeft                      = 0x54CC,
+	Matroska_PixelCropRight                     = 0x54DD,
 
 	/*
 		Display Width + Height, and how DisplayWidth & DisplayHeight are interpreted.
 
 		Described in Section 8.1.4.1.31.11 .. 13 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_DisplayWidth                 = 0x54B0,
-	Matroska_Video_DisplayHeight                = 0x54BA,
-	Matroska_Video_DisplayUnit                  = 0x54B2,
+	Matroska_DisplayWidth                       = 0x54B0,
+	Matroska_DisplayHeight                      = 0x54BA,
+	Matroska_DisplayUnit                        = 0x54B2,
 
 	/*
 		Specify the pixel format used for the Track's data as a FourCC.
@@ -940,14 +940,14 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.31.14 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_ColourSpace                  = 0x2EB524,
+	Matroska_ColourSpace                        = 0x2EB524,
 
 	/*
 		Settings describing the colour format.
 
 		Described in Section 8.1.4.1.31.15 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_Colour                       = 0x55B0,
+	Matroska_Colour                             = 0x55B0,
 
 	/*
 		The Matrix Coefficients of the video used to derive luma and chroma values from
@@ -956,14 +956,14 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.31.16 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Colour_MatrixCoefficients          = 0x55B1,
+	Matroska_MatrixCoefficients                 = 0x55B1,
 
 	/*
 		Number of decoded bits per channel. A value of 0 indicates that the BitsPerChannel is unspecified.
 
 		Described in Section 8.1.4.1.31.17 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Colour_BitsPerChannel              = 0x55B2,
+	Matroska_BitsPerChannel                     = 0x55B2,
 
 	/*
 		The amount of pixels to remove in the Cr and Cb channels for every pixel not removed horizontally.
@@ -974,8 +974,8 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.31.18 .. 23 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Colour_ChromaSubsamplingHorz       = 0x55B3,
-	Matroska_Colour_ChromaSubsamplingVert       = 0x55B4,
+	Matroska_ChromaSubsamplingHorz              = 0x55B3,
+	Matroska_ChromaSubsamplingVert              = 0x55B4,
 	Matroska_CbSubsamplingHorz                  = 0x55B5,
 	Matroska_CbSubsamplingVert                  = 0x55B6,
 	Matroska_ChromaSitingHorz                   = 0x55B7,
@@ -986,7 +986,7 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.31.24 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Colour_Range                       = 0x55B9,
+	Matroska_Range                              = 0x55B9,
 
 	/*
 		The transfer characteristics of the video. For clarity, the value and meanings for
@@ -997,8 +997,8 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.31.25 .. 26 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Colour_TransferCharacteristics     = 0x55BA,
-	Matroska_Colour_Primaries                   = 0x55BB,
+	Matroska_TransferCharacteristics            = 0x55BA,
+	Matroska_Primaries                          = 0x55BB,
 
 
 	/*
@@ -1007,15 +1007,15 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.31.27 .. 28 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Colour_MaxCLL                      = 0x55BC,
-	Matroska_Colour_MaxFALL                     = 0x55BD,
+	Matroska_MaxCLL                             = 0x55BC,
+	Matroska_MaxFALL                            = 0x55BD,
 
 	/*
 		SMPTE 2086 mastering data.
 
 		Described in Section 8.1.4.1.31.29 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Colour_MasteringMetadata           = 0x55D0,
+	Matroska_MasteringMetadata                  = 0x55D0,
 
 	/*
 		RGB-W chromaticity coordinates, as defined by CIE 1931.
@@ -1046,18 +1046,18 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.31.40 .. 42 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_Projection                   = 0x7670,
-	Matroska_Video_ProjectionType               = 0x7671,
-	Matroska_Video_ProjectionPrivate            = 0x7672,
+	Matroska_Projection                         = 0x7670,
+	Matroska_ProjectionType                     = 0x7671,
+	Matroska_ProjectionPrivate                  = 0x7672,
 
 	/*
 		Projection vector rotation.
 
 		Described in Section 8.1.4.1.31.43 .. 45 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Video_ProjectionPoseYaw            = 0x7673,
-	Matroska_Video_ProjectionPosePitch          = 0x7674,
-	Matroska_Video_ProjectionPoseRoll           = 0x7675,
+	Matroska_ProjectionPoseYaw                  = 0x7673,
+	Matroska_ProjectionPosePitch                = 0x7674,
+	Matroska_ProjectionPoseRoll                 = 0x7675,
 
 	/*
 		Audio settings.
@@ -1065,10 +1065,10 @@ EBML_ID :: enum u64be {
 		Described in Section 8.1.4.1.32 of IETF draft-ietf-cellar-matroska-08
 	*/
 	Matroska_Audio                              = 0xE1,
-	Matroska_Audio_SamplingFrequency            = 0xB5,
-	Matroska_Audio_OutputSamplingFrequency      = 0x78B5,
-	Matroska_Audio_Channels                     = 0x9F,
-	Matroska_Audio_BitDepth                     = 0x6264,
+	Matroska_SamplingFrequency                  = 0xB5,
+	Matroska_OutputSamplingFrequency            = 0x78B5,
+	Matroska_Channels                           = 0x9F,
+	Matroska_BitDepth                           = 0x6264,
 
 	/*
 		Operation that needs to be applied on tracks to create this virtual track.
@@ -1080,7 +1080,7 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.4.1.33 .. 33.2 of IETF draft-ietf-cellar-matroska-08	
 	*/
-	Matroska_Track_Operation                    = 0xE2,
+	Matroska_TrackOperation                     = 0xE2,
 	Matroska_TrackCombinePlanes                 = 0xE3,
 	Matroska_TrackPlane                         = 0xE4,
 
@@ -1211,7 +1211,7 @@ EBML_ID :: enum u64be {
 
 		Described in Section 8.1.5 of IETF draft-ietf-cellar-matroska-08
 	*/
-	Matroska_Segment_Cues                       = 0x1C53BB6B,
+	Matroska_Cues                               = 0x1C53BB6B,
 
 	/*
 		Contains all information relative to a seek point in the Segment.
@@ -1574,8 +1574,99 @@ EBML_ID :: enum u64be {
 	*/
 	Matroska_Targets                            = 0x63C0,
 
+	/*
+		A number to indicate the logical level of the target.
 
+		Described in Section 8.1.8.1.1.1 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TargetTypeValue                    = 0x68CA,
 
+	/*
+		An informational string that can be used to display the logical level of the target like
+		"ALBUM", "TRACK", "MOVIE", "CHAPTER", etc ; see Section 6.4 of [MatroskaTags].
+
+		Described in Section 8.1.8.1.1.2 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TargetType                         = 0x63CA,
+
+	/*
+		A unique ID to identify the Track(s) the tags belong to.
+
+		Described in Section 8.1.8.1.1.3 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagTrackUID                        = 0x63C5,
+
+	/*
+		A unique ID to identify the EditionEntry(s) the tags belong to.
+
+		Described in Section 8.1.8.1.1.4 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagEditionUID                      = 0x63C9,
+
+	/*
+		A unique ID to identify the Chapter(s) the tags belong to.
+
+		Described in Section 8.1.8.1.1.5 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagChapterUID                      = 0x63C4,
+
+	/*
+		A unique ID to identify the Attachment(s) the tags belong to.
+
+		Described in Section 8.1.8.1.1.6 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagAttachmentUID                   = 0x63C6,
+
+	/*
+		Contains general information about the target.
+
+		Described in Section 8.1.8.1.2 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_SimpleTag                          = 0x67C8,
+
+	/*
+		The name of the Tag that is going to be stored.
+
+		Described in Section 8.1.8.1.2.1 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagName                            = 0x45A3,
+
+	/*
+		Specifies the language of the tag specified, in the Matroska languages form; see Section 6 on language codes.
+		This Element MUST be ignored if the TagLanguageIETF Element is used within the same SimpleTag Element.
+
+		Described in Section 8.1.8.1.2.2 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagLanguage                        = 0x447A,
+
+	/*
+		Specifies the language used in the TagString according to [BCP47] and using the IANA Language Subtag Registry
+		[IANALangRegistry]. If this Element is used, then any TagLanguage Elements used in the same SimpleTag MUST be ignored.
+
+		Described in Section 8.1.8.1.2.3 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagLanguageIETF                    = 0x447B,
+
+	/*
+		A boolean value to indicate if this is the default/original language to use for the given tag.
+
+		Described in Section 8.1.8.1.2.4 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagDefault                         = 0x4484,
+
+	/*
+		The value of the Tag.
+
+		Described in Section 8.1.8.1.2.5 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagString                          = 0x4487,
+
+	/*
+		The values of the Tag, if it is binary. Note that this cannot be used in the same SimpleTag as TagString.
+
+		Described in Section 8.1.8.1.2.6 of IETF draft-ietf-cellar-matroska-08
+	*/
+	Matroska_TagBinary                          = 0x4485,
 
 
 
