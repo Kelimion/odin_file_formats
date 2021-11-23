@@ -156,66 +156,70 @@ print_box_header :: proc(box: ^BMFF_Box, level := int(0)) {
 }
 
 print_box :: proc(f: ^BMFF_File, box: ^BMFF_Box, level := int(0), print_siblings := false, recurse := false) {
-	print_box_header(box, level)
+	box := box
 
-	#partial switch v in box.payload {
-	case FTYP:
-		print_ftyp(v, level + 1)
+	for box != nil {
+		print_box_header(box, level)
 
-	case HDLR:
-		print_hdlr(v, level + 1)
+		#partial switch v in box.payload {
+		case FTYP:
+			print_ftyp(v, level + 1)
 
-	case MDHD_V0:
-		print_mdhd(v, level + 1)
+		case HDLR:
+			print_hdlr(v, level + 1)
 
-	case MDHD_V1:
-		print_mdhd(v, level + 1)
+		case MDHD_V0:
+			print_mdhd(v, level + 1)
 
-	case MVHD_V0:
-		print_mvhd(v, level + 1)
+		case MDHD_V1:
+			print_mdhd(v, level + 1)
 
-	case MVHD_V1:
-		print_mvhd(v, level + 1)
+		case MVHD_V0:
+			print_mvhd(v, level + 1)
 
-	case TKHD_V0:
-		print_tkhd(f, v, level + 1)
+		case MVHD_V1:
+			print_mvhd(v, level + 1)
 
-	case TKHD_V1:
-		print_tkhd(f, v, level + 1)
+		case TKHD_V0:
+			print_tkhd(f, v, level + 1)
 
-	case ELST_V0:
-		print_elst(v, level + 1)
+		case TKHD_V1:
+			print_tkhd(f, v, level + 1)
 
-	case ELST_V1:
-		print_elst(v, level + 1)
+		case ELST_V0:
+			print_elst(v, level + 1)
 
-	case Chapter_List:
-		print_chpl(f, v, level + 1)
+		case ELST_V1:
+			print_elst(v, level + 1)
 
-	case:
-		#partial switch box.type {
-		case .Name:
-			payload := box.payload.([dynamic]u8)[:]
-			if len(payload) == 0 { return }
+		case Chapter_List:
+			print_chpl(f, v, level + 1)
 
-			if box.parent.type == .User_Data {
-				printf(level + 1, "Name: %v\n", string(payload))
+		case:
+			#partial switch box.type {
+			case .Name:
+				payload := box.payload.([dynamic]u8)[:]
+				if len(payload) == 0 { return }
+
+				if box.parent.type == .User_Data {
+					printf(level + 1, "Name: %v\n", string(payload))
+				}
+			}
+
+			if box.parent == f.itunes_metadata {
+				if box.type != .iTunes_Extended {
+					print_itunes_metadata(box.payload.(iTunes_Metadata), level + 1)	
+				}
 			}
 		}
 
-		if box.parent == f.itunes_metadata {
-			if box.type != .iTunes_Extended {
-				print_itunes_metadata(box.payload.(iTunes_Metadata), level + 1)	
-			}
+		if recurse && box.first_child != nil {
+			print_box(f, box.first_child, level + 1, print_siblings, recurse)
 		}
-	}
 
-	if recurse && box.first_child != nil {
-		print_box(f, box.first_child, level + 1, print_siblings, recurse)
-	}
-
-	if print_siblings && box.next != nil {
-		print_box(f, box.next, level, print_siblings, recurse)
+		if print_siblings {
+			box = box.next
+		}
 	}
 }
 
@@ -225,7 +229,6 @@ print :: proc(f: ^BMFF_File, box: ^BMFF_Box = nil, print_siblings := false, recu
 	} else {
 		print_box(f, f.root, 0, true, true)
 	}
-	
 }
 
 printf :: proc(level: int, format: string, args: ..any) {

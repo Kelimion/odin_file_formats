@@ -33,61 +33,63 @@ intern_payload :: proc(box: ^BMFF_Box, payload: $T, loc := #caller_location) {
 	}
 }
 
-free_atom :: proc(atom: ^BMFF_Box) {
-	if atom.first_child != nil {
-		free_atom(atom.first_child)
-	}
+free_atom :: proc(atom: ^BMFF_Box, allocator := context.allocator) {
+	atom := atom
 
-	if atom.next != nil {
-		free_atom(atom.next)			
-	}
-
-	when DEBUG_VERBOSE {
-		fmt.printf("Freeing '%v' (0x%08x).\n", _string(atom.type), int(atom.type))
-	}
-
-	if atom.payload != nil {
-		switch v in atom.payload {
-
-		case [dynamic]u8: delete(v)
-		case ELST_V0:     delete(v.entries)
-		case ELST_V1:     delete(v.entries)
-		case FTYP:        delete(v.compatible)
-		case HDLR:        delete(v.name)
-
-		/*
-			iTunes metadata types
-		*/
-		case iTunes_Metadata:
-			switch w in v.data {
-			case cstring:     delete(w)
-			case [dynamic]u8: delete(w)
-
-			case iTunes_Track, iTunes_Disk:
-				// Nothing to do.
-			}
-
-		case Chapter_List:
-			for chapter in v.chapters {
-				delete(chapter.title)
-			}
-			delete(v.chapters)
-
-		/*
-			These are just structs with no allocated items to free.
-		*/
-		case MDHD_V0, MDHD_V1:
-		case MVHD_V0, MVHD_V1:
-		case TKHD_V0, TKHD_V1:
-		case iTunes_Track, iTunes_Disk:
-
-		case:
-			unhandled := fmt.tprintf("free_atom: Unhandled payload type: %v\n", v)
-			panic(unhandled)
+	for atom != nil {
+		when DEBUG_VERBOSE {
+			fmt.printf("Freeing '%v' (0x%08x).\n", _string(atom.type), int(atom.type))
 		}
+
+		if atom.payload != nil {
+			switch v in atom.payload {
+
+			case [dynamic]u8: delete(v)
+			case ELST_V0:     delete(v.entries)
+			case ELST_V1:     delete(v.entries)
+			case FTYP:        delete(v.compatible)
+			case HDLR:        delete(v.name)
+
+			/*
+				iTunes metadata types
+			*/
+			case iTunes_Metadata:
+				switch w in v.data {
+				case cstring:     delete(w)
+				case [dynamic]u8: delete(w)
+
+				case iTunes_Track, iTunes_Disk:
+					// Nothing to do.
+				}
+
+			case Chapter_List:
+				for chapter in v.chapters {
+					delete(chapter.title)
+				}
+				delete(v.chapters)
+
+			/*
+				These are just structs with no allocated items to free.
+			*/
+			case MDHD_V0, MDHD_V1:
+			case MVHD_V0, MVHD_V1:
+			case TKHD_V0, TKHD_V1:
+			case iTunes_Track, iTunes_Disk:
+
+			case:
+				unhandled := fmt.tprintf("free_atom: Unhandled payload type: %v\n", v)
+				panic(unhandled)
+			}
+		}
+
+		if atom.first_child != nil {
+			free_atom(atom.first_child)
+		}
+
+		ptr_to_free := atom
+		atom = atom.next
+		free(ptr_to_free)
 	}
-	
-	free(atom)
 }
 
 parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
@@ -735,7 +737,7 @@ close :: proc(file: ^BMFF_File) {
 		os.close(file.handle)
 	}
 	if file.root != nil {
-		free_atom(file.root)
+		free_atom(file.root, file.allocator)
 	}
 	free(file)
 
