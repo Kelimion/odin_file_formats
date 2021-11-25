@@ -377,3 +377,26 @@ _string :: proc(type: $T) -> (res: string) {
 		#panic("to_string: Unsupported type.")
 	}
 }
+
+
+_find_element_by_type :: proc(element: ^EBML_Element, type: EBML_ID, elements: ^[dynamic]^EBML_Element) {
+	element := element
+
+	for element != nil {
+		if element.first_child != nil {
+			_find_element_by_type(element.first_child, type, elements)
+		}
+
+		if element.id == type { append(elements, element) }
+		element = element.next
+	}
+}
+
+find_element_by_type :: proc(f: ^EBML_File, type: EBML_ID, elements: ^[dynamic]^EBML_Element, document_index := 0) {
+	if f == nil { return }
+	if document_index + 1 < len(f.documents) { return }
+
+	document := f.documents[document_index]
+	_find_element_by_type(document.body, type, elements)
+}
+

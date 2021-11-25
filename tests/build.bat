@@ -5,3 +5,7 @@ echo ---
 echo Running ISO Base Media File Format tests
 echo ---
 %PATH_TO_ODIN% run bmff %COMMON%
+echo ---
+echo Running EBML (Matroska) Format tests
+echo ---
+%PATH_TO_ODIN% run ebml %COMMON%

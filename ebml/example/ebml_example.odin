@@ -14,7 +14,7 @@ import "../../common"
 
 parse_metadata       := true
 skip_clusters        := false
-return_after_cluster := true
+return_after_cluster := false
 
 _main :: proc() {
 	using fmt
@@ -71,13 +71,6 @@ _main :: proc() {
 
 	printf("Parse: %.2fs (%f MiB/s).\n", time.duration_seconds(parse_diff), parse_speed)
 	printf("Print: %.2fs.\n", time.duration_seconds(print_diff))
-
-	when false {
-		println("----")
-		for v in ebml.EBML_ID {
-			printf("[%v]: 0x%08x\n", ebml._string(v), int(v))
-		}
-	}
 }
 
 main :: proc() {
