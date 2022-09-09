@@ -1,3 +1,11 @@
+/*
+	Copyright 2022 Jeroen van Rijn <nom@duclavier.com>.
+
+	Made available under Odin's BSD-3 license.
+
+	A from-scratch implementation of the Minecraft NBT format and associated helpers.
+	Very work-in-progress, but it works with MC 1.19.2 data.
+*/
 package minecraft
 
 import "core:intrinsics"
