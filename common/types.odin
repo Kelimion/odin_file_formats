@@ -27,15 +27,14 @@ _string :: proc(type: $T) -> (res: string) {
 
 	when T == UUID_RFC_4122 {
 		buffer := PRINT_BUFFER[:]
-		using type
 		return bprintf(
 			buffer[:], "%06x-%02x-%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-			time_low,
-			time_mid,
-			time_hi_and_version,
-			clk_seq_hi_and_reserved,
-			clk_seq_low,
-			node[0], node[1], node[2], node[3], node[4], node[5],
+			type.time_low,
+			type.time_mid,
+			type.time_hi_and_version,
+			type.clk_seq_hi_and_reserved,
+			type.clk_seq_low,
+			type.node[0], type.node[1], type.node[2], type.node[3], type.node[4], type.node[5],
 		)
 	} else when T == FourCC {
 		buffer := PRINT_BUFFER[:]

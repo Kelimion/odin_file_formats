@@ -123,11 +123,10 @@ _time :: proc(seconds: $T) -> time.Time {
 }
 
 _matrix :: proc(mat: View_Matrix) -> (m: matrix[3, 3]f64) {
-	using mat
 	m = matrix[3, 3]f64{
-		_f64(a), _f64(b), _f64(u),
-		_f64(c), _f64(d), _f64(v),
-		_f64(x), _f64(y), _f64(w),
+		_f64(mat.a), _f64(mat.b), _f64(mat.u),
+		_f64(mat.c), _f64(mat.d), _f64(mat.v),
+		_f64(mat.x), _f64(mat.y), _f64(mat.w),
 	}
 	return
 }

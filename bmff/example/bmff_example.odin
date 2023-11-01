@@ -13,13 +13,11 @@ import bmff ".."
 parse_metadata := true
 
 _main :: proc() {
-	using fmt
-
 	EXE_NAME := os.args[0]
 
 	if len(os.args) == 1 {
-		println("ISO Base Media File Format parser example")
-		printf("Usage: %v [bmff filename]\n\n", EXE_NAME)
+		fmt.println("ISO Base Media File Format parser example")
+		fmt.printf("Usage: %v [bmff filename]\n\n", EXE_NAME)
 		os.exit(1)
 	}
 
@@ -28,32 +26,30 @@ _main :: proc() {
 	defer bmff.close(f)
 
 	if err != .None {
-		printf("Couldn't open '%v'\n", file)
+		fmt.printf("Couldn't open '%v'\n", file)
 		return
 	}
 
-	printf("\nOpened '%v'\n", file)
-	printf("\tFile size: %v\n", f.file_info.size)
-	printf("\tCreated:   %v\n", f.file_info.creation_time)
-	printf("\tModified:  %v\n", f.file_info.modification_time)
+	fmt.printf("\nOpened '%v'\n", file)
+	fmt.printf("\tFile size: %v\n", f.file_info.size)
+	fmt.printf("\tCreated:   %v\n", f.file_info.creation_time)
+	fmt.printf("\tModified:  %v\n", f.file_info.modification_time)
 
-	println("\n-=-=-=-=-=-=- PARSED FILE -=-=-=-=-=-=-")
+	fmt.println("\n-=-=-=-=-=-=- PARSED FILE -=-=-=-=-=-=-")
 	e := bmff.parse(f, parse_metadata)
 	bmff.print(f)
-	println("\n-=-=-=-=-=-=- PARSED FILE -=-=-=-=-=-=-")
-	printf("Parse Error: %v\n\n", e)
+	fmt.println("\n-=-=-=-=-=-=- PARSED FILE -=-=-=-=-=-=-")
+	fmt.printf("Parse Error: %v\n\n", e)
 
 	when false {
 		println("----")
 		for v in bmff.FourCC {
-			printf("[%v]: 0x%08x\n", bmff._string(v), int(v))
+			fmt.printf("[%v]: 0x%08x\n", bmff._string(v), int(v))
 		}
 	}
 }
 
 main :: proc() {
-	using fmt
-
 	track: mem.Tracking_Allocator
 	mem.tracking_allocator_init(&track, context.allocator)
 	context.allocator = mem.tracking_allocator(&track)
@@ -61,9 +57,9 @@ main :: proc() {
 	_main()
 
 	if len(track.allocation_map) > 0 {
-		println()
+		fmt.println()
 		for _, v in track.allocation_map {
-			printf("Leaked %v bytes @ loc %v\n", v.size, v.location)
+			fmt.printf("Leaked %v bytes @ loc %v\n", v.size, v.location)
 		}
 	}
 }

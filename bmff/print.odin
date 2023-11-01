@@ -44,67 +44,61 @@ print_itunes_metadata :: proc(tag: iTunes_Metadata, level := int(0)) {
 print_mdhd :: proc(mdhd: $T, level := int(0)) {
 	#assert(T == MDHD_V0 || T == MDHD_V1)
 
-	using mdhd
-	seconds := f64(duration) / f64(time_scale)
+	seconds := f64(mdhd.duration) / f64(mdhd.time_scale)
 	printf(level, "duration: %v seconds\n", seconds)
-	printf(level, "created:  %v (%v)\n",   _time(creation_time), creation_time)
-	printf(level, "modified: %v (%v)\n",   _time(modification_time), modification_time)
-	printf(level, "language: %v\n",        _string(language))
-	printf(level, "quality:  %v\n",        quality)
+	printf(level, "created:  %v (%v)\n",   _time(mdhd.creation_time), mdhd.creation_time)
+	printf(level, "modified: %v (%v)\n",   _time(mdhd.modification_time), mdhd.modification_time)
+	printf(level, "language: %v\n",        _string(mdhd.language))
+	printf(level, "quality:  %v\n",        mdhd.quality)
 }
 
 print_elst :: proc(elst: $T, level := int(0)) {
 	#assert(T == ELST_V0 || T == ELST_V1)
 	for e, i in elst.entries {
-		using e
 		printf(level, "edit: %v\n", i)
-		printf(level + 1, "segment_duration: %v\n",    segment_duration)
-		printf(level + 1, "media_time:       %v\n",    media_time)
-		printf(level + 1, "media_rate:       %v/%v\n", media_rate.x, media_rate.y)
+		printf(level + 1, "segment_duration: %v\n",    e.segment_duration)
+		printf(level + 1, "media_time:       %v\n",    e.media_time)
+		printf(level + 1, "media_rate:       %v/%v\n", e.media_rate.x, e.media_rate.y)
 	}
 }
 
 print_tkhd :: proc(f: ^BMFF_File, tkhd: $T, level := int(0)) {
 	#assert(T == TKHD_V0 || T == TKHD_V1)
 
-	using tkhd
-	seconds := f64(duration) / f64(f.time_scale)
+	seconds := f64(tkhd.duration) / f64(f.time_scale)
 
-	printf(level, "track:    %v\n",         track_id)
-	printf(level, "flags:    %v\n",         flags_3)
+	printf(level, "track:    %v\n",         tkhd.track_id)
+	printf(level, "flags:    %v\n",         tkhd.flags_3)
 	printf(level, "duration: %v seconds\n", seconds)
-	printf(level, "created:  %v (%v)\n",    _time(creation_time), creation_time)
-	printf(level, "modified: %v (%v)\n",    _time(modification_time), modification_time)
+	printf(level, "created:  %v (%v)\n",    _time(tkhd.creation_time), tkhd.creation_time)
+	printf(level, "modified: %v (%v)\n",    _time(tkhd.modification_time), tkhd.modification_time)
 
-	if volume == 0 {
-		printf(level, "width:    %v\n",     _f64(width))
-		printf(level, "height:   %v\n",     _f64(height))
+	if tkhd.volume == 0 {
+		printf(level, "width:    %v\n",     _f64(tkhd.width))
+		printf(level, "height:   %v\n",     _f64(tkhd.height))
 	} else {
-		printf(level, "volume:   %v\n",     _f64(volume))
+		printf(level, "volume:   %v\n",     _f64(tkhd.volume))
 	}
-	printf(level, "matrix:   %v\n",         _matrix(view_matrix))
+	printf(level, "matrix:   %v\n",         _matrix(tkhd.view_matrix))
 }
 
 print_mvhd :: proc(mvhd: $T, level := int(0)) {
 	#assert(T == MVHD_V0 || T == MVHD_V1)
 
-	using mvhd
-	seconds := f64(duration) / f64(time_scale)
+	seconds := f64(mvhd.duration) / f64(mvhd.time_scale)
 
-	printf(level, "preferred_rate:   %v\n",         _f64(preferred_rate))
-	printf(level, "preferred_volume: %v\n",         _f64(preferred_volume))
+	printf(level, "preferred_rate:   %v\n",         _f64(mvhd.preferred_rate))
+	printf(level, "preferred_volume: %v\n",         _f64(mvhd.preferred_volume))
 	printf(level, "duration:         %v seconds\n", seconds)
-	printf(level, "created:          %v (%v)\n",    _time(creation_time), creation_time)
-	printf(level, "modified:         %v (%v)\n",    _time(modification_time), modification_time)
-	printf(level, "matrix:           %v\n",         _matrix(view_matrix))
-	printf(level, "next track id:    %v\n",         next_track_id)
+	printf(level, "created:          %v (%v)\n",    _time(mvhd.creation_time), mvhd.creation_time)
+	printf(level, "modified:         %v (%v)\n",    _time(mvhd.modification_time), mvhd.modification_time)
+	printf(level, "matrix:           %v\n",         _matrix(mvhd.view_matrix))
+	printf(level, "next track id:    %v\n",         mvhd.next_track_id)
 }
 
 print_ftyp :: proc(ftyp: FTYP, level := int(0)) {
-	using ftyp
-
-	printf(level, "Major Brand:   %v (0x%08x)\n", _string(brand), int(brand))
-	printf(level, "Minor Version: %v.%v.%v.%v\n", version.x, version.y, version.z, version.w)
+	printf(level, "Major Brand:   %v (0x%08x)\n", _string(ftyp.brand), int(ftyp.brand))
+	printf(level, "Minor Version: %v.%v.%v.%v\n", ftyp.version.x, ftyp.version.y, ftyp.version.z, ftyp.version.w)
 
 	println(level, "Compat:")
 	for compat in ftyp.compatible {
@@ -115,22 +109,20 @@ print_ftyp :: proc(ftyp: FTYP, level := int(0)) {
 print_hdlr :: proc(hdlr: $T, level := int(0)) {
 	#assert(T == HDLR)
 
-	using hdlr
-
-	if component_type != nil {
-		printf(level, "Type:         %v\n", _string(component_type))
+	if hdlr.component_type != nil {
+		printf(level, "Type:         %v\n", _string(hdlr.component_type))
 	}
 
-	if component_subtype != nil {
-		printf(level, "Sub-Type:     %v\n", _string(component_subtype))
+	if hdlr.component_subtype != nil {
+		printf(level, "Sub-Type:     %v\n", _string(hdlr.component_subtype))
 	}
 
-	if component_manufacturer != nil {
-		printf(level, "Manufacturer: %v\n", _string(component_manufacturer))
+	if hdlr.component_manufacturer != nil {
+		printf(level, "Manufacturer: %v\n", _string(hdlr.component_manufacturer))
 	}
 
-	if len(name) > 0 {
-		printf(level, "Name:         %v\n", name)
+	if len(hdlr.name) > 0 {
+		printf(level, "Name:         %v\n", hdlr.name)
 	}
 }
 
