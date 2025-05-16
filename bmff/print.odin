@@ -223,7 +223,10 @@ print_box :: proc(f: ^BMFF_File, box: ^BMFF_Box, level := int(0), print_siblings
 
 			if box.parent == f.itunes_metadata {
 				if box.type != .iTunes_Extended {
-					print_itunes_metadata(box.payload.(iTunes_Metadata), level + 1)	
+					#partial switch kind in box.payload {
+					case iTunes_Metadata: print_itunes_metadata(kind, level + 1)
+					}
+
 				}
 			}
 		}
