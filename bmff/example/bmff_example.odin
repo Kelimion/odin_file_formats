@@ -76,7 +76,6 @@ _main :: proc() {
 	fmt.printf("Parse Error: %v\n\n", e)
 
 	parse_speed := f64(time.Second) / f64(parse_diff) * f64(f.file_info.size) / f64(1024 * 1024)
-
 	fmt.printfln("Parse: %.3f ms (%f MiB/s).", 1_000 * time.duration_seconds(parse_diff), parse_speed)
 	fmt.printfln("Print: %.3f ms.", 1_000 * time.duration_seconds(print_diff))
 }

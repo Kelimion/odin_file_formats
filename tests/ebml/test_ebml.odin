@@ -40,11 +40,11 @@ EBML_Test :: struct {
 
 EBML_Tests :: []EBML_Test{
 	{
-		filename  = "assets/ebml/subtitles.mkv",
+		filename  = "../assets/ebml/subtitles.mkv",
 		subtitles = { "hun", "ger", "fre", "spa", "ita", "jpn"},
 	},
 	{
-		filename  = "assets/ebml/damaged.mkv",
+		filename  = "../assets/ebml/damaged.mkv",
 	},
 }
 

@@ -35,7 +35,7 @@ import "../../bmff"
 ISOM_Test :: string
 
 ISOM_Tests :: []ISOM_Test{
-	"assets/bmff/test_metadata.mp4",
+	"../assets/bmff/test_metadata.mp4",
 }
 
 @test
