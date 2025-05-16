@@ -69,16 +69,12 @@ free_atom :: proc(atom: ^BMFF_Box, allocator := context.allocator) {
 			case FTYP:        delete(v.compatible)
 			case HDLR:        delete(v.name)
 
-			/*
-				iTunes metadata types
-			*/
+			// iTunes metadata types
 			case iTunes_Metadata:
 				switch w in v.data {
 				case cstring:     delete(w)
 				case [dynamic]u8: delete(w)
-
-				case iTunes_Track, iTunes_Disk:
-					// Nothing to do.
+				case iTunes_Track, iTunes_Disk: // Nothing to free.
 				}
 
 			case Chapter_List:
@@ -87,16 +83,12 @@ free_atom :: proc(atom: ^BMFF_Box, allocator := context.allocator) {
 				}
 				delete(v.chapters)
 
-			/*
-				These are just structs with no allocated items to free.
-			*/
+			// These are just structs with no allocated items to free.
 			case MDHD_V0, MDHD_V1:
 			case MVHD_V0, MVHD_V1:
 			case TKHD_V0, TKHD_V1:
 			case iTunes_Track, iTunes_Disk:
-
-			case:
-				fmt.panicf("free_atom: Unhandled payload type: %v\n", v)
+			case: fmt.panicf("free_atom: Unhandled payload type: %v\n", v)
 			}
 		}
 
@@ -191,18 +183,12 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 		box.header = h
 		box.parent = parent
 
-		/*
-			Chain it.
-		*/
+		// Chain it.
 		if parent.first_child == nil {
-			/*
-				We're either our parent's first child...
-			*/
+			// We're either our parent's first child...
 			parent.first_child = box
 		} else {
-			/*
-				Or we walk our siblings until its next pointer is nil.
-			*/
+			// Or we walk our siblings until its next pointer is nil.
 			sibling: ^BMFF_Box
 			for sibling = parent.first_child; sibling.next != nil; sibling = sibling.next {}
 			sibling.next = box
@@ -221,9 +207,7 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 			*/
 			skip := true
 			if f.itunes_metadata != nil {
-				/*
-					We parse if we've previously located the property bag.
-				*/
+				// We parse if we've previously located the property bag.
 				if parent.parent == f.itunes_metadata {
 					skip = false
 					payload := common.read_slice(fd, box.payload_size) or_return
@@ -263,11 +247,8 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 	// Most files start with an 'ftyp' atom.
 	h = read_box_header(fd=fd, read=false) or_return
 	if h.type != .File_Type {
-		/*
-			NOTE(Jeroen):
-				Files with no file‐type box should be read as if they contained an FTYP box with	
-				Major_brand='mp41', minor_version=0, and the single compatible brand `mp41`.
-		*/
+		// NOTE(Jeroen): Files with no file‐type box should be read as if they contained an FTYP box with
+		//               Major_brand='mp41', minor_version=0, and the single compatible brand `mp41`.
 		box = new(BMFF_Box)
 		box.size           = 0
 		box.type           = .File_Type
@@ -278,7 +259,6 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			header = { .mp41, 0, },
 		}
 		append(&ftyp.compatible, FourCC.mp41)
-
 		intern_payload(box, ftyp)
 	}
 
@@ -289,15 +269,11 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			return
 		}
 
-		/*
-			Find the parent by what byte range of the file we're at.
-		*/
+		// Find the parent by what byte range of the file we're at.
 		parent = prev
 		for {
 			if h.offset >= parent.end {
-				/*
-					Parent can't contain this box. Let's look at its parent.
-				*/
+				// Parent can't contain this box. Let's look at its parent.
 				when DEBUG_VERBOSE {
 					fmt.printf("\t[%v] ends past ",      _string(h.type))
 					fmt.printf("[%v] end, checking if ", _string(parent.type))
@@ -305,32 +281,22 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 				}
 				parent = parent.parent
 			} else {
-				/*
-					Box fits within this parent.
-				*/
+				// Box fits within this parent.
 				break
 			}
 		}
 
-		/*
-			Create box and set type, size, parent, etc.
-		*/
+		// Create box and set type, size, parent, etc.
 		box = new(BMFF_Box)
 		box.header = h
 		box.parent = parent
 
-		/*
-			Chain it.
-		*/
+		// Chain it.
 		if parent.first_child == nil {
-			/*
-				We're either our parent's first child...
-			*/
+			// We're either our parent's first child...
 			parent.first_child = box
 		} else {
-			/*
-				Or we walk our siblings until its next pointer is nil.
-			*/
+			// Or we walk our siblings until its next pointer is `nil`.
 			sibling: ^BMFF_Box
 			for sibling = parent.first_child; sibling.next != nil; sibling = sibling.next {}
 			sibling.next = box
@@ -351,9 +317,7 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 
 		#partial switch h.type {
 		case .File_Type:
-			/*
-				`ftyp` must always be the first child and we can't have two nodes of this type.
-			*/
+			// `ftyp` must always be the first child and we can't have two nodes of this type.
 			if f.root.first_child != box {
 				return .FTYP_Duplicated
 			}
@@ -552,9 +516,7 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			f.mdat = box
 			skip_box(fd, box) or_return
 
-		/*
-			Boxes we don't (want to or can yet) parse, we skip.
-		*/
+		// Boxes we don't (want to or can yet) parse, we skip.
 		case:
 			if box.end >= i64(f.root.size) { break loop }
 			skip_box(fd, box) or_return
@@ -612,12 +574,7 @@ read_box_header :: #force_inline proc(fd: ^os.File, read := true) -> (header: BM
 	header.payload_size = header.end - header.payload_offset + 1
 
 	when DEBUG_VERBOSE {
-		verb: string
-		if read {
-			verb = "read_box_header"
-		} else {
-			verb = "peek_box_header"
-		}
+		verb := "read_box_header" if read else "peek_box_header"
 		if header.type == .uuid {
 			fmt.printf("[%v] 'uuid' (%v) Size: %v\n", verb, _string(header.uuid), header.size)
 		} else {

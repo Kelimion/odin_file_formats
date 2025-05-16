@@ -29,8 +29,9 @@ package file_format_common
 	File format parser helpers.
 */
 
-import "base:intrinsics"
+import    "base:intrinsics"
 import os "core:os/os2"
+import    "core:io"
 
 Error :: os.Error
 
@@ -39,54 +40,46 @@ SEEK_CUR :: 1
 SEEK_END :: 2
 
 get_pos :: proc(f: ^os.File) -> (pos: i64, err: Error) {
-	p := os.seek(f, 0, .Current) or_return
-	return p, nil
+	return io.seek(f.stream, 0, .Current)
 }
 
 set_pos :: proc(f: ^os.File, pos: i64) -> (err: Error) {
-	os.seek(f, pos, .Start) or_return
+	io.seek(f.stream, pos, .Start) or_return
 	return
 }
 
 @(optimization_mode="favor_size")
-read_slice :: #force_inline proc(fd: ^os.File, size: $S, allocator := context.temp_allocator, loc := #caller_location) -> (res: []u8, err: Error) where intrinsics.type_is_integer(S) {
-	res = make([]u8, int(size), allocator, loc=loc) or_return
-
-	bytes_read, read_err := os.read(fd, res)
-	if read_err != nil && read_err != .EOF {
+read_slice :: #force_inline proc(f: ^os.File, size: $S, allocator := context.temp_allocator, loc := #caller_location) -> (res: []u8, err: Error) where intrinsics.type_is_integer(S) {
+	res    = make([]u8, int(size), allocator, loc=loc) or_return
+	if _, err = io.read(f.stream, res); err != nil && err != .EOF {
 		delete(res)
 		return nil, .Unexpected_EOF
 	}
-	return res[:bytes_read], nil
-}
-
-@(optimization_mode="favor_size")
-read_data :: #force_inline proc(fd: ^os.File, $T: typeid, allocator := context.temp_allocator, loc := #caller_location) -> (res: T, err: Error) {
-	b := read_slice(fd, size_of(T), loc=loc) or_return
-
-	return (^T)(raw_data(b))^, nil
-}
-
-@(optimization_mode="favor_size")
-read_u8 :: #force_inline proc(fd: ^os.File, loc := #caller_location) -> (res: u8, err: Error) {
-	b := read_slice(fd, 1, context.temp_allocator, loc=loc) or_return
-	return b[0], nil
-}
-
-@(optimization_mode="favor_size")
-peek_data :: #force_inline proc(fd: ^os.File, $T: typeid, loc := #caller_location) -> (res: T, err: Error) {
-	cur := get_pos(fd)  or_return
-	res  = read_data(fd, T, context.temp_allocator, loc=loc) or_return
-	set_pos(fd, cur) or_return
-
 	return res, nil
 }
 
 @(optimization_mode="favor_size")
-peek_u8 :: #force_inline proc(fd: ^os.File, allocator := context.temp_allocator, loc := #caller_location) -> (res: u8, err: Error) {
-	cur := get_pos(fd)  or_return
-	res  = read_data(fd, u8, context.temp_allocator, loc=loc) or_return
-	set_pos(fd, cur) or_return
+read_data :: #force_inline proc(f: ^os.File, $T: typeid, allocator := context.temp_allocator, loc := #caller_location) -> (res: T, err: Error) {
+	b := read_slice(f, size_of(T), loc=loc) or_return
+	return intrinsics.unaligned_load((^T)(raw_data(b))), nil
+}
 
-	return res, nil
+@(optimization_mode="favor_size")
+read_u8 :: #force_inline proc(f: ^os.File, loc := #caller_location) -> (res: u8, err: Error) {
+	return io.read_byte(f.stream)
+}
+
+@(optimization_mode="favor_size")
+peek_data :: #force_inline proc(f: ^os.File, $T: typeid, allocator := context.temp_allocator, loc := #caller_location) -> (res: T, err: Error) {
+	b := make([]u8, size_of(T), allocator, loc=loc) or_return
+	io.read_at(f.stream, b, 0) or_return
+	return intrinsics.unaligned_load((^T)(raw_data(b))), nil
+}
+
+@(optimization_mode="favor_size")
+peek_u8 :: #force_inline proc(f: ^os.File, allocator := context.temp_allocator, loc := #caller_location) -> (res: u8, err: Error) {
+	buf: [1]byte
+	io.read_at(f.stream, buf[:], 0) or_return
+	res = buf[0]
+	return
 }

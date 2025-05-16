@@ -73,17 +73,13 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 	document = new(EBML_Document)
 	append(&f.documents, document)
 
-	/*
-		Set EBML header defaults, in case they're omitted.
-	*/
+	// Set EBML header defaults, in case they're omitted.
 	document.version         = EBML_VERSION // EBMLVersion
 	document.read_version    = EBML_VERSION // EBMLReadVersion
 	document.max_id_length   = 4            // EBMLMaxIDLength
 	document.max_size_length = 8            // EBMLMaxSizeLength
 
-	/*
-		Set up common element members.
-	*/
+	// Set up common element members.
 	element := EBML_Element {
 		offset         = offset,
 		size           = i64(id_size) + i64(length_size) + i64(length),
@@ -116,9 +112,7 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 		length, length_size = read_variable_int(f) or_return
 
 		if id == .EBML {
-			/*
-				Shouldn't account a header element while parsing a previous one.
-			*/
+			// Shouldn't account a header element while parsing a previous one.
 			return .EBML_Header_Duplicated
 		}
 
@@ -128,15 +122,11 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 			printf(1, "Length: %v, Length Size: %v\n",      length, length_size)
 		}
 
-		/*
-			Find the parent by what byte range of the file we're at.
-		*/
+		// Find the parent by what byte range of the file we're at.
 		parent = prev
 		for {
 			if offset >= parent.end {
-				/*
-					Parent can't contain this element. Let's look at its parent.
-				*/
+				// Parent can't contain this element. Let's look at its parent.
 				when DEBUG_VERBOSE >= 4 {
 					printf(2, "[%v] ends past ", _string(id))
 					printf(0, "[%v] end, checking if ", _string(parent.id))
@@ -144,16 +134,12 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 				}
 				parent = parent.parent
 			} else {
-				/*
-					Element fits within this parent.
-				*/
+				// Element fits within this parent.
 				break
 			}
 		}
 
-		/*
-			Set up common element members.
-		*/
+		// Set up common element members.
 		element = EBML_Element {
 			offset         = offset,
 			size           = i64(id_size) + i64(length_size) + i64(length),
@@ -412,9 +398,7 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 			}
 		}
 
-		/*
-			Set up common element members.
-		*/
+		// Set up common element members.
 		element = EBML_Element {
 			offset         = offset,
 			size           = i64(id_size) + i64(length_size) + i64(length),
@@ -431,9 +415,7 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 			if this.parent.first_child == nil {
 				this.parent.first_child = this
 			} else {
-				/*
-					Chain.
-				*/
+				// Chain.
 				sibling := this.parent.first_child
 				for ; sibling.next != nil; sibling = sibling.next {}
 				sibling.next = this
@@ -488,9 +470,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 	// TODO(Jeroen): Do this only if we've just started parsing the body, not when we're parsing incrementally.
 	if id != .Matroska_Segment { return .Matroska_Body_Root_Wrong_ID }
 
-	/*
-		Set up common element members.
-	*/
+	// Set up common element members.
 	element := EBML_Element {
 		offset         = offset,
 		size           = i64(id_size) + i64(length_size) + i64(length),

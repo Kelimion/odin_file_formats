@@ -246,23 +246,17 @@ intern_binary :: proc(f: ^EBML_File, length: u64, this: ^EBML_Element) -> (err: 
 
 verify_crc32 :: proc(f: ^EBML_File, element: ^EBML_Element) -> (err: Error) {
 	if f == nil || element == nil {
-		/*
-			Return false if given a bogus element.
-		*/
+		// Return false if given a bogus element.
 		return .Invalid_CRC
 	}
 
 	if element.first_child == nil || element.first_child.id != .CRC_32 {
-		/*
-			This element doesn't have a CRC-32 check, so consider it verified.
-		*/
+		// This element doesn't have a CRC-32 check, so consider it verified.
 		return
 	}
 
 	if checksum, checksum_ok := element.first_child.payload.(u64); !checksum_ok {
-		/*
-			A CRC-32 payload always has to be the first element, per the spec.
-		*/
+		// A CRC-32 payload always has to be the first element, per the spec.
 		return .Invalid_CRC
 	} else {
 		cur_pos := common.get_pos(f.handle) or_return
@@ -320,10 +314,6 @@ is_printable :: #force_inline proc(ch: u8) -> (printable: bool, terminator: bool
 
 _string :: proc(type: $T) -> (res: string) {
 	when T == EBML_ID {
-		has_prefix :: proc(s, prefix: string) -> bool {
-			return len(s) >= len(prefix) && s[0:len(prefix)] == prefix
-		}
-
 		id := runtime.typeid_base(typeid_of(EBML_ID))
 		type_info := type_info_of(id)
 
@@ -351,10 +341,8 @@ _string :: proc(type: $T) -> (res: string) {
 			}
 		}
 
+		// We could do `string(t[:4])`, but this also handles e.g. `©too`.
 		temp := transmute([8]u8)type
-		/*
-			We could do `string(t[:4])`, but this also handles e.g. `©too`.
-		*/
 		if common.is_printable(temp[:]) {
 			return fmt.bprintf(buffer[:], "%c%c%c%c 0x%08x", temp[0], temp[1], temp[2], temp[3], i64(type))
 		} else {
@@ -391,4 +379,3 @@ find_element_by_type :: proc(f: ^EBML_File, type: EBML_ID, elements: ^[dynamic]^
 	document := f.documents[document_index]
 	_find_element_by_type(document.body, type, elements)
 }
-
