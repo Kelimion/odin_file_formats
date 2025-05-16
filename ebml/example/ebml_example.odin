@@ -53,8 +53,8 @@ _main :: proc() {
 	f, err := ebml.open(file)
 	defer ebml.close(f)
 
-	if err != .None {
-		fmt.printf("Couldn't open '%v'\n", file)
+	if err != nil {
+		fmt.printf("Couldn't open '%v'. Err: %v\n", file, err)
 		return
 	}
 

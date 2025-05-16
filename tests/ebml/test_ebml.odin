@@ -52,7 +52,7 @@ EBML_Tests :: []EBML_Test{
 ebml_test :: proc(t: ^testing.T) {
 	for test in EBML_Tests {
 		err := ebml_test_file(t, test)
-		testing.expectf(t, err == .None, "ebml_test_file(%v) returned %v", test.filename, err)
+		testing.expectf(t, err == nil, "ebml_test_file(%v) returned %v", test.filename, err)
 	}
 }
 

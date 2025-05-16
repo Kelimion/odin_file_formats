@@ -57,7 +57,7 @@ free_atom :: proc(atom: ^BMFF_Box, allocator := context.allocator) {
 
 	for atom != nil {
 		when DEBUG_VERBOSE {
-			fmt.printf("Freeing '%v' (0x%08x).\n", _string(atom.type), int(atom.type))
+			fmt.printfln("Freeing '%v' (0x%08x).", _string(atom.type), int(atom.type))
 		}
 
 		if atom.payload != nil {
@@ -134,17 +134,14 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 		*/
 		h, err = read_box_header(fd=fd, read=false)
 		if h.offset >= f.root.end || h.offset > f.itunes_metadata.end {
-			/*
-				Done.
-			*/
-			err = .None
-			break loop
+			// Done.
+			return
 		}
 
 		/*
 			Now read it for real.
 		*/
-		if h, err = read_box_header(fd=fd, read=true); err != .None { return .Error_Parsing_iTunes_Metadata }
+		if h, err = read_box_header(fd=fd, read=true); err != nil { return .Error_Parsing_iTunes_Metadata }
 
 		/*
 			Create box and set type, size, parent, etc.
@@ -304,9 +301,11 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 	}
 
 	loop: for {
-		h, err = read_box_header(fd=fd, read=true)
-		if h.offset >= f.root.size { break loop }
-		if err != .None { return err }
+		h = read_box_header(fd=fd, read=true) or_return
+		if h.offset >= f.root.size {
+			// Done
+			return
+		}
 
 		/*
 			Find the parent by what byte range of the file we're at.
@@ -610,7 +609,7 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 
 		prev = box
 	}
-	return .None
+	return
 }
 
 skip_box :: proc(fd: os.Handle, box: ^BMFF_Box) -> (err: Error) {
@@ -618,7 +617,7 @@ skip_box :: proc(fd: os.Handle, box: ^BMFF_Box) -> (err: Error) {
 	if !common.set_pos(fd, box.end + 1) {
 		return .Read_Error
 	}
-	return .None
+	return
 }
 
 read_box_header :: #force_inline proc(fd: os.Handle, read := true) -> (header: BMFF_Box_Header, err: Error) {
@@ -686,7 +685,7 @@ read_box_header :: #force_inline proc(fd: os.Handle, read := true) -> (header: B
 	*/
 	if !read && !common.set_pos(fd, header.offset) { return header, .Read_Error }
 
-	return header, .None if e else .Read_Error
+	return header, nil if e else .Read_Error
 }
 
 open_from_filename :: proc(filename: string, allocator := context.allocator) -> (file: ^BMFF_File, err: Error) {

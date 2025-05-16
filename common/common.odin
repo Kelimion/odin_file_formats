@@ -30,7 +30,16 @@ package file_format_common
 */
 
 import "base:intrinsics"
+import "base:runtime"
+import "core:io"
 import "core:os"
+
+Error :: union #shared_nil {
+	os.General_Error,
+	io.Error,
+	runtime.Allocator_Error,
+	os.Platform_Error,
+}
 
 SEEK_SET :: 0
 SEEK_CUR :: 1

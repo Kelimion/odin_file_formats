@@ -61,14 +61,14 @@ read_variable_id :: proc(f: ^EBML_File) -> (res: EBML_ID, length: u8, err: Error
 	length = clz(b0) + 1
 	val   := u64be(b0)
 
-	if length == 1 { return EBML_ID(val), 1, .None }
+	if length == 1 { return EBML_ID(val), 1, nil }
 	if data, ok = common.read_slice(f.handle, length - 1); !ok { return {}, 0, .Read_Error }
 
 	for v in data {
 		val <<= 8
 		val |=  u64be(v)
 	}
-	return EBML_ID(val), length, .None
+	return EBML_ID(val), length, nil
 }
 
 read_variable_int :: proc(f: ^EBML_File) -> (res: u64, length: u8, err: Error) {
@@ -83,7 +83,7 @@ read_variable_int :: proc(f: ^EBML_File) -> (res: u64, length: u8, err: Error) {
 	length = clz(b0) + 1
 	res    = u64(b0)
 
-	if length == 1 { return res & 0x7f, 1, .None }
+	if length == 1 { return res & 0x7f, 1, nil }
 
 	if data, ok = common.read_slice(f.handle, length - 1); !ok { return {}, 0, .Read_Error }
 
@@ -91,7 +91,7 @@ read_variable_int :: proc(f: ^EBML_File) -> (res: u64, length: u8, err: Error) {
 		res <<= 8
 		res |=  u64(v)
 	}
-	return res & ((1 << (length * 7) - 1)), length, .None
+	return res & ((1 << (length * 7) - 1)), length, nil
 }
 
 _read_uint :: proc(f: ^EBML_File, length: u64) -> (res: u64, err: Error) {
@@ -103,11 +103,11 @@ _read_uint :: proc(f: ^EBML_File, length: u64) -> (res: u64, err: Error) {
 
 	switch length {
 	case 0:
-		return 0, .None
+		return 0, nil
 
 	case 1:
 		if b0, ok = common.read_u8(f.handle); !ok              { return {}, .Read_Error }
-		return u64(b0), .None
+		return u64(b0), nil
 
 	case 2..=8: // 2..8:
 		if data, ok = common.read_slice(f.handle, length); !ok { return {}, .Read_Error }
@@ -116,7 +116,7 @@ _read_uint :: proc(f: ^EBML_File, length: u64) -> (res: u64, err: Error) {
 			res <<= 8
 			res |=  u64(v)
 		}
-		return res, .None
+		return res, nil
 
 	case:
 		return 0, .Unsigned_Invalid_Length
@@ -129,7 +129,7 @@ intern_uint :: proc(f: ^EBML_File, length: u64, this: ^EBML_Element) -> (err: Er
 	this.type        = .Unsigned
 	this.payload     = _read_uint(f, length) or_return
 
-	return .None
+	return
 }
 
 _read_sint :: proc(f: ^EBML_File, length: u64) -> (res: i64, err: Error) {
@@ -137,7 +137,7 @@ _read_sint :: proc(f: ^EBML_File, length: u64) -> (res: i64, err: Error) {
 
 	switch length {
 	case 0:
-		return 0, .None
+		return 0, nil
 
 	case 1..=8: // 1..8:
 		if data, ok := common.read_slice(f.handle, length); !ok {
@@ -152,7 +152,7 @@ _read_sint :: proc(f: ^EBML_File, length: u64) -> (res: i64, err: Error) {
 				res <<= 8
 				res |=  i64(v)
 			}
-			return res, .None
+			return res, nil
 		}
 
 	case:
@@ -166,7 +166,7 @@ intern_sint :: proc(f: ^EBML_File, length: u64, this: ^EBML_Element) -> (err: Er
 	this.type        = .Signed
 	this.payload     = _read_sint(f, length) or_return
 
-	return .None
+	return
 }
 
 _read_float :: proc(f: ^EBML_File, length: u64) -> (res: f64, err: Error) {
@@ -174,17 +174,17 @@ _read_float :: proc(f: ^EBML_File, length: u64) -> (res: f64, err: Error) {
 
 	switch length {
 	case 0:
-		return 0.0, .None
+		return 0.0, nil
 
 	case 4:
 		if f, ok := common.read_data(f.handle, f32be); ok {
-			return f64(f), .None
+			return f64(f), nil
 		}
 		return 0.0, .Float_Invalid_Length
 
 	case 8:
 		if f, ok := common.read_data(f.handle, f64be); ok {
-			return f64(f), .None
+			return f64(f), nil
 		}
 		return 0.0, .Float_Invalid_Length
 
@@ -199,7 +199,7 @@ intern_float :: proc(f: ^EBML_File, length: u64, this: ^EBML_Element) -> (err: E
 	this.type        = .Float
 	this.payload     = _read_float(f, length) or_return
 
-	return .None
+	return
 }
 
 read_string :: proc(f: ^EBML_File, length: u64, utf8 := false) -> (res: String, err: Error) {
@@ -221,7 +221,7 @@ read_string :: proc(f: ^EBML_File, length: u64, utf8 := false) -> (res: String, 
 				return "", .Unprintable_String
 			}
 		}
-		return String(data), .None
+		return String(data), nil
 	}
 }
 
@@ -231,7 +231,7 @@ intern_string :: proc(f: ^EBML_File, length: u64, this: ^EBML_Element) -> (err: 
 	this.type    = .String
 	this.payload = read_string(f, length) or_return
 
-	return .None
+	return
 }
 
 read_utf8 :: proc(f: ^EBML_File, length: u64) -> (res: string, err: Error) {
@@ -246,7 +246,7 @@ intern_utf8 :: proc(f: ^EBML_File, length: u64, this: ^EBML_Element) -> (err: Er
 	this.type    = .UTF_8
 	this.payload = read_utf8(f, length) or_return
 
-	return .None
+	return
 }
 
 skip_binary :: proc(f: ^EBML_File, length: u64, this: ^EBML_Element) -> (err: Error) {
@@ -265,7 +265,7 @@ intern_binary :: proc(f: ^EBML_File, length: u64, this: ^EBML_Element) -> (err: 
 		append(&this.payload.([dynamic]u8), ..payload)
 	}
 
-	return .None
+	return
 }
 
 
@@ -281,7 +281,7 @@ verify_crc32 :: proc(f: ^EBML_File, element: ^EBML_Element) -> (err: Error) {
 		/*
 			This element doesn't have a CRC-32 check, so consider it verified.
 		*/
-		return .None
+		return
 	}
 
 	if checksum, checksum_ok := element.first_child.payload.(u64); !checksum_ok {
@@ -320,10 +320,8 @@ verify_crc32 :: proc(f: ^EBML_File, element: ^EBML_Element) -> (err: Error) {
 			*/
 			if !common.set_pos(f.handle, cur_pos) { return .Read_Error }
 
-			/*
-				CRC32 matched.
-			*/
-			return .None
+			// CRC32 matched.
+			return
 		}
 	}
 	return .Invalid_CRC

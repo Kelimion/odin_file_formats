@@ -349,7 +349,7 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 	if document.doctype_read_version > document.doctype_version { return .DocTypeReadVersion_Invalid }
 
 
-	return .None
+	return
 }
 
 parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: Error) {
@@ -412,7 +412,7 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 				Rewind to its offset and let the header parser handle it.
 			*/
 			if !common.set_pos(f.handle, offset) { return .Read_Error }
-			return .None
+			return
 		}
 
 		when DEBUG_VERBOSE >= 3 {
@@ -504,7 +504,7 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 		prev = this
 	}
 
-	return .None
+	return
 }
 
 parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters := true, return_after_cluster := true) -> (err: Error) {
@@ -558,7 +558,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 
 		if return_after_cluster && last_cluster != nil {
 			if offset == last_cluster.end + 1 {
-				return .None
+				return
 			}
 		}
 
@@ -581,7 +581,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 				Rewind to its offset and let the header parser handle it.
 			*/
 			if !common.set_pos(f.handle, offset) { return .Read_Error }
-			return .None
+			return
 		}
 
 		when DEBUG_VERBOSE >= 3 {
@@ -2137,7 +2137,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 		prev = this
 	}
 
-	return .None
+	return
 }
 
 parse :: proc(f: ^EBML_File, parse_metadata := true, skip_clusters := true, return_after_cluster := true) -> (err: Error) {
@@ -2191,7 +2191,7 @@ parse :: proc(f: ^EBML_File, parse_metadata := true, skip_clusters := true, retu
 		printf(0, "Done parsing at offset: %v\n", offset)
 	}
 
-	return .None
+	return
 }
 
 open_from_filename :: proc(filename: string, allocator := context.allocator) -> (file: ^EBML_File, err: Error) {

@@ -85,51 +85,38 @@ BMFF_Box :: struct {
 	next:           ^BMFF_Box,
 	first_child:    ^BMFF_Box,
 
-	/*
-		Payload can be empty
-	*/
+	// Payload can be empty
 	payload:        Payload_Types,
 }
 
 BMFF_File :: struct {
-	/*
-		Root atom
-	*/
+	// Root atom
 	root: ^BMFF_Box,
 
-	/*
-		Important atoms
-	*/
+	// Important atoms
 	ftyp: ^BMFF_Box,
 	moov: ^BMFF_Box,
 	mvhd: ^BMFF_Box,
 	mdat: ^BMFF_Box,
 
 	/*
-		Apple Metadata isd not specified in ISO 14496-12-2015.
+		Apple Metadata is not specified in ISO 14496-12-2015.
 		Nevertheless, we add support for it.
 
-		If `moov.udta.meta.hdlr` == `mdir/appl`,
-		then `itunes_metadata` is set to `moov.udta.meta.ilst`
+		If `moov.udta.meta.hdlr` == `mdir/appl`, then `itunes_metadata` is set to `moov.udta.meta.ilst`
 	*/
 	itunes_metadata: ^BMFF_Box,
 
-	/*
-		Useful file members
-	*/
+	// Useful file members
 	time_scale: u32be,
 
-	/*
-		Implementation
-	*/
+	// Implementation
 	file_info: os.File_Info,
 	handle:    os.Handle,
 	allocator: mem.Allocator,
 }
 
-/*
-	Files that don't start with 'ftyp' have this synthetic one.
-*/
+// Files that don't start with 'ftyp' have this synthetic one.
 _FTYP :: struct {
 	brand:   FourCC,
 	version: BCD4,
@@ -153,16 +140,16 @@ Version_and_Flags :: struct #packed {
 	flags_3: Header_Flags_3,
 }
 
-Times :: struct($type_width: typeid) #packed {
-	creation_time:     type_width,
-	modification_time: type_width,
+Times :: struct($T: typeid) #packed {
+	creation_time:     T,
+	modification_time: T,
 }
 
-MVHD :: struct($type_width: typeid) #packed {
+MVHD :: struct($T: typeid) #packed {
 	using _vf:         Version_and_Flags,
-	using _times:      Times(type_width),
+	using _times:      Times(T),
 	time_scale:        u32be,
-	duration:          type_width,
+	duration:          T,
 	preferred_rate:    Fixed_16_16,
 	preferred_volume:  Fixed_8_8,
 	_reserved:         [10]u8,
@@ -174,12 +161,12 @@ MVHD_V0 :: distinct MVHD(u32be)
 MVHD_V1 :: distinct MVHD(u64be)
 #assert(size_of(MVHD_V0) == 100 && size_of(MVHD_V1) == 112)
  
-TKHD :: struct($type_width: typeid) #packed {
+TKHD :: struct($T: typeid) #packed {
 	using _vf:         Version_and_Flags,
-	using _times:      Times(type_width),
+	using _times:      Times(T),
 	track_id:          u32be,
 	_reserved_1:       u32be,
-	duration:          type_width,
+	duration:          T,
 
 	_reserved_2:       [2]u32be,
 	layer:             i16be,
@@ -200,8 +187,8 @@ _ELST :: struct #packed {
 }
 #assert(size_of(_ELST) == 8)
 
-ELST_Entry :: struct($type_width: typeid) #packed {
-	segment_duration:  type_width,
+ELST_Entry :: struct($T: typeid) #packed {
+	segment_duration:  T,
 	media_time:        i32be,
 	media_rate:        Rational_16_16,
 }
@@ -209,18 +196,18 @@ ELST_Entry_V0 :: distinct ELST_Entry(u32be)
 ELST_Entry_V1 :: distinct ELST_Entry(u64be)
 #assert(size_of(ELST_Entry_V0) == 12 && size_of(ELST_Entry_V1) == 16)
 
-ELST :: struct($type_width: typeid) #packed {
+ELST :: struct($T: typeid) #packed {
 	using header:      _ELST,
-	entries:           [dynamic]ELST_Entry(type_width),
+	entries:           [dynamic]ELST_Entry(T),
 }
 ELST_V0 :: distinct ELST(u32be)
 ELST_V1 :: distinct ELST(u64be)
 
-MDHD :: struct($type_width: typeid) #packed {
+MDHD :: struct($T: typeid) #packed {
 	using _vf:         Version_and_Flags,
-	using _times:      Times(type_width),
+	using _times:      Times(T),
 	time_scale:        u32be,
-	duration:          type_width,
+	duration:          T,
 	language:          ISO_639_2, // ISO-639-2/T language code
 	quality:           u16be,
 }

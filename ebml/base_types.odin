@@ -48,8 +48,12 @@ Matroska_Time :: time.Time
 EBML_VERSION       :: 1
 MAX_DOCTYPE_LENGTH :: 1_024
 
-Error :: enum {
-	None = 0,
+Error :: union #shared_nil {
+	EBML_Error,
+	common.Error,
+}
+
+EBML_Error :: enum {
 	File_Not_Found,
 	File_Not_Opened,
 	File_Empty,

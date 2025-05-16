@@ -43,7 +43,7 @@ ISOM_Tests :: []ISOM_Test{
 isom_test :: proc(t: ^testing.T) {
 	for test in ISOM_Tests {
 		err := isom_test_file(t, test)
-		testing.expectf(t, err == .None, "isom_test_file(%v) returned %v", test, err)
+		testing.expectf(t, err == nil, "isom_test_file(%v) returned %v", test, err)
 	}
 }
 

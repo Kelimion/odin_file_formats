@@ -37,8 +37,12 @@ package iso_bmff
 
 import "../common"
 
-Error :: enum {
-	None = 0,
+Error :: union #shared_nil {
+	BMFF_Error,
+	common.Error,
+}
+
+BMFF_Error :: enum {
 	File_Not_Found,
 	File_Not_Opened,
 	File_Empty,
