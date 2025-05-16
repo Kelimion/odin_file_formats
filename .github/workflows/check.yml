@@ -1,0 +1,42 @@
+name: Check everything
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 20 * * *
+
+env:
+  FORCE_COLOR: "1"
+
+jobs:
+  checks:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew install llvm@18
+          echo "/opt/homebrew/opt/llvm@18/bin" >> "$GITHUB_PATH"
+
+      - name: Build Odin
+        run: |
+          git clone https://github.com/odin-lang/Odin.git --depth 1 --single-branch --branch=master
+          cd Odin
+          make
+          echo "$(pwd)" >> "$GITHUB_PATH"
+          ./odin report
+
+      - name: Check everything
+        run: |
+          FLAGS="-vet -vet-tabs -strict-style -vet-style -warnings-as-errors -disallow-do"
+
+          pushd tests/bmff
+          odin test . $FLAGS
+          popd
+
+          pushd tests/ebml
+          odin test . $FLAGS
+          popd
