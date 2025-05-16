@@ -8,7 +8,6 @@ package file_format_common
 
 import "base:intrinsics"
 import "core:os"
-import "core:fmt"
 
 SEEK_SET :: 0
 SEEK_CUR :: 1
@@ -57,7 +56,6 @@ read_slice :: #force_inline proc(fd: os.Handle, size: $S, allocator := context.t
 
 	bytes_read, read_err := os.read(fd, res)
 	if read_err != os.ERROR_NONE && read_err != os.ERROR_EOF {
-		fmt.printfln("read_err: %v", read_err)
 		delete(res)
 		return nil, false
 	}
