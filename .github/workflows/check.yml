@@ -44,9 +44,13 @@ jobs:
       - name: BMFF example
         run: |
           FLAGS="-vet -vet-tabs -strict-style -vet-style -warnings-as-errors -disallow-do -define:BMFF_DEBUG=false -o:speed"
+          pushd bmff/example
           odin run . $FLAGS -- "../../tests/assets/bmff/test_metadata.mp4"
+          popd
 
       - name: EBML example
         run: |
           FLAGS="-vet -vet-tabs -strict-style -vet-style -warnings-as-errors -disallow-do -define:EBML_DEBUG=false -o:speed"
+          pushd ebml/example
           odin run . $FLAGS -- "../../tests/assets/ebml/subtitles.mkv"
+          popd
