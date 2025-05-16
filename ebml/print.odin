@@ -26,7 +26,7 @@ global_writer:  io.Writer
 
 @(init)
 _init_string_builder :: proc() {
-	strings.init_builder(&string_builder)
+	strings.builder_init(&string_builder)
 	global_writer = strings.to_writer(&string_builder)
 }
 
@@ -36,7 +36,7 @@ _get_string :: proc() -> string {
 
 flush_builder_to_output :: proc() {
 	fmt.println(_get_string())
-	strings.reset_builder(&string_builder)
+	strings.builder_reset(&string_builder)
 }
 
 printf :: proc(level: int, format: string, args: ..any) {

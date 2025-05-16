@@ -1698,9 +1698,8 @@ EBML_Type_Info :: struct {
 	name:      string,
 }
 
-Matroska_Schema :: #partial [EBML_ID]EBML_Type_Info {
+Matroska_Schema :: #partial #sparse[EBML_ID]EBML_Type_Info {
 	.Matroska_Segment = {
 		.Master, .Intern, "Segment",
 	},
-
 }

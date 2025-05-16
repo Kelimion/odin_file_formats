@@ -35,23 +35,23 @@ EBML_Tests :: []EBML_Test{
 }
 
 when ODIN_TEST {
-    expect  :: testing.expect
-    log     :: testing.log
+	expect  :: testing.expect
+	log     :: testing.log
 } else {
-    expect  :: proc(t: ^testing.T, condition: bool, message: string, loc := #caller_location) {
-        fmt.printf("[%v] ", loc)
-        TEST_count += 1
-        if !condition {
-            TEST_fail += 1
-            fmt.println(message)
-            return
-        }
-        fmt.println(" PASS")
-    }
-    log     :: proc(t: ^testing.T, v: any, loc := #caller_location) {
-        fmt.printf("[%v] ", loc)
-        fmt.printf("log: %v\n", v)
-    }
+	expect  :: proc(t: ^testing.T, condition: bool, message: string, loc := #caller_location) {
+		fmt.printf("[%v] ", loc)
+		TEST_count += 1
+		if !condition {
+			TEST_fail += 1
+			fmt.println(message)
+			return
+		}
+		fmt.println(" PASS")
+	}
+	log     :: proc(t: ^testing.T, v: any, loc := #caller_location) {
+		fmt.printf("[%v] ", loc)
+		fmt.printf("log: %v\n", v)
+	}
 }
 
 main :: proc() {

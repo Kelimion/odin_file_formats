@@ -11,8 +11,8 @@ package ebml
 	This file contains the EBML type helpers.
 */
 
-import "core:intrinsics"
-import "core:runtime"
+import "base:intrinsics"
+import "base:runtime"
 import "core:reflect"
 import "core:time"
 import "core:hash"
@@ -86,7 +86,7 @@ _read_uint :: proc(f: ^EBML_File, length: u64) -> (res: u64, err: Error) {
 		if b0, ok = common.read_u8(f.handle); !ok              { return {}, .Read_Error }
 		return u64(b0), .None
 
-	case 2..8:
+	case 2..=8: // 2..8:
 		if data, ok = common.read_slice(f.handle, length); !ok { return {}, .Read_Error }
 
 		for v in data {
@@ -116,7 +116,7 @@ _read_sint :: proc(f: ^EBML_File, length: u64) -> (res: i64, err: Error) {
 	case 0:
 		return 0, .None
 
-	case 1..8:
+	case 1..=8: // 1..8:
 		if data, ok := common.read_slice(f.handle, length); !ok {
 			return 0, .Read_Error
 		} else {
@@ -279,8 +279,7 @@ verify_crc32 :: proc(f: ^EBML_File, element: ^EBML_Element) -> (err: Error) {
 
 			for size > 0 {
 				block_size     := min(size, CRC_BLOCK_SIZE)
-
-				data, data_ok  := common.read_slice(f.handle, block_size)
+				data, _        := common.read_slice(f.handle, block_size)
 				computed_crc    = hash.crc32(data, computed_crc)
 				cur_pos, cur_ok = common.get_pos(f.handle)
 
@@ -315,7 +314,7 @@ nanoseconds_to_time :: proc(nanoseconds: i64) -> (res: time.Time) {
 
 is_printable :: #force_inline proc(ch: u8) -> (printable: bool, terminator: bool) {
 	switch ch {
-	case 0x20..0x7E:
+	case 0x20..=0x7E: // 0x20..0x7E:
 		return true, false
 	case 0x00:
 		// Terminator

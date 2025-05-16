@@ -49,7 +49,7 @@ _main :: proc() {
 	fmt.println("\n-=-=-=-=-=-=- PARSED FILE -=-=-=-=-=-=-")
 	fmt.printf("Parse Error: %v\n\n", e)
 
-	fmt.print_start := time.now()
+	print_start := time.now()
 	ebml.print(f)
 	print_end   := time.now()
 	print_diff  := time.diff(print_start, print_end)
