@@ -8,6 +8,7 @@ package file_format_common
 
 import "base:intrinsics"
 import "core:os"
+import "core:fmt"
 
 SEEK_SET :: 0
 SEEK_CUR :: 1
@@ -48,15 +49,15 @@ size :: proc(f: os.Handle) -> (res: i64, ok: bool) {
 }
 
 @(optimization_mode="favor_size")
-read_slice :: #force_inline proc(fd: os.Handle, size: $S, allocator := context.temp_allocator) -> (res: []u8, ok: bool) where intrinsics.type_is_integer(S) {
-
-	res = make([]u8, int(size), allocator)
+read_slice :: #force_inline proc(fd: os.Handle, size: $S, allocator := context.temp_allocator, loc := #caller_location) -> (res: []u8, ok: bool) where intrinsics.type_is_integer(S) {
+	res = make([]u8, int(size), allocator, loc=loc)
 	if res == nil {
 		return nil, false
 	}
 
 	bytes_read, read_err := os.read(fd, res)
-	if read_err != os.ERROR_NONE {
+	if read_err != os.ERROR_NONE && read_err != os.ERROR_EOF {
+		fmt.printfln("read_err: %v", read_err)
 		delete(res)
 		return nil, false
 	}
@@ -64,8 +65,8 @@ read_slice :: #force_inline proc(fd: os.Handle, size: $S, allocator := context.t
 }
 
 @(optimization_mode="favor_size")
-read_data :: #force_inline proc(fd: os.Handle, $T: typeid, allocator := context.temp_allocator) -> (res: T, ok: bool) {
-	b, e := read_slice(fd, size_of(T))
+read_data :: #force_inline proc(fd: os.Handle, $T: typeid, allocator := context.temp_allocator, loc := #caller_location) -> (res: T, ok: bool) {
+	b, e := read_slice(fd, size_of(T), loc=loc)
 
 	if e {
 		return (^T)(raw_data(b))^, e
@@ -75,8 +76,8 @@ read_data :: #force_inline proc(fd: os.Handle, $T: typeid, allocator := context.
 }
 
 @(optimization_mode="favor_size")
-read_u8 :: #force_inline proc(fd: os.Handle) -> (res: u8, ok: bool) {
-	b, e := read_slice(fd, 1, context.temp_allocator)
+read_u8 :: #force_inline proc(fd: os.Handle, loc := #caller_location) -> (res: u8, ok: bool) {
+	b, e := read_slice(fd, 1, context.temp_allocator, loc=loc)
 	if e {
 		return b[0], e
 	}
@@ -84,7 +85,7 @@ read_u8 :: #force_inline proc(fd: os.Handle) -> (res: u8, ok: bool) {
 }
 
 @(optimization_mode="favor_size")
-peek_data :: #force_inline proc(fd: os.Handle, $T: typeid) -> (res: T, ok: bool) {
+peek_data :: #force_inline proc(fd: os.Handle, $T: typeid, loc := #caller_location) -> (res: T, ok: bool) {
 
 	cur: i64
 	errno: os.Errno
@@ -92,7 +93,7 @@ peek_data :: #force_inline proc(fd: os.Handle, $T: typeid) -> (res: T, ok: bool)
 	// Remember current position
 	if cur, errno = os.seek(fd, 0, os.SEEK_CUR); errno != nil { return {}, false }
 
-	res, ok = read_data(fd, T, context.temp_allocator)
+	res, ok = read_data(fd, T, context.temp_allocator, loc=loc)
 
 	if _, errno = os.seek(fd, cur, os.SEEK_SET); errno != nil { return {}, false }
 
@@ -100,7 +101,7 @@ peek_data :: #force_inline proc(fd: os.Handle, $T: typeid) -> (res: T, ok: bool)
 }
 
 @(optimization_mode="favor_size")
-peek_u8 :: #force_inline proc(fd: os.Handle, allocator := context.temp_allocator) -> (res: u8, ok: bool) {
+peek_u8 :: #force_inline proc(fd: os.Handle, allocator := context.temp_allocator, loc := #caller_location) -> (res: u8, ok: bool) {
 
 	cur: i64
 	errno: os.Errno
@@ -108,7 +109,7 @@ peek_u8 :: #force_inline proc(fd: os.Handle, allocator := context.temp_allocator
 	// Remember current position
 	if cur, errno = os.seek(fd, 0, os.SEEK_CUR); errno != nil { return {}, false }
 
-	res, ok = read_data(fd, u8, allocator)
+	res, ok = read_data(fd, u8, allocator, loc=loc)
 
 	if _, errno = os.seek(fd, cur, os.SEEK_SET); errno != nil { return {}, false }
 
