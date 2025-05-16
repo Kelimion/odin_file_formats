@@ -6,7 +6,7 @@ package file_format_common
 	File format parser helpers.
 */
 
-import "core:intrinsics"
+import "base:intrinsics"
 import "core:os"
 
 SEEK_SET :: 0
@@ -49,7 +49,7 @@ size :: proc(f: Handle) -> (res: i64, ok: bool) {
 	return end, true
 }
 
-@(optimization_mode="speed")
+@(optimization_mode="favor_size")
 read_slice :: #force_inline proc(fd: Handle, size: $S, allocator := context.temp_allocator) -> (res: []u8, ok: bool) where intrinsics.type_is_integer(S) {
 
     res = make([]u8, int(size), allocator)
@@ -65,7 +65,7 @@ read_slice :: #force_inline proc(fd: Handle, size: $S, allocator := context.temp
     return res[:bytes_read], true
 }
 
-@(optimization_mode="speed")
+@(optimization_mode="favor_size")
 read_data :: #force_inline proc(fd: Handle, $T: typeid, allocator := context.temp_allocator) -> (res: T, ok: bool) {
 	b, e := read_slice(fd, size_of(T))
 
@@ -76,7 +76,7 @@ read_data :: #force_inline proc(fd: Handle, $T: typeid, allocator := context.tem
 	return T{}, false
 }
 
-@(optimization_mode="speed")
+@(optimization_mode="favor_size")
 read_u8 :: #force_inline proc(fd: Handle) -> (res: u8, ok: bool) {
 	b, e := read_slice(fd, 1, context.temp_allocator)
 	if e {
@@ -85,7 +85,7 @@ read_u8 :: #force_inline proc(fd: Handle) -> (res: u8, ok: bool) {
 	return 0, e
 }
 
-@(optimization_mode="speed")
+@(optimization_mode="favor_size")
 peek_data :: #force_inline proc(fd: Handle, $T: typeid) -> (res: T, ok: bool) {
 
 	cur: i64
@@ -101,7 +101,7 @@ peek_data :: #force_inline proc(fd: Handle, $T: typeid) -> (res: T, ok: bool) {
 	return res, ok
 }
 
-@(optimization_mode="speed")
+@(optimization_mode="favor_size")
 peek_u8 :: #force_inline proc(fd: Handle, allocator := context.temp_allocator) -> (res: u8, ok: bool) {
 
 	cur: i64

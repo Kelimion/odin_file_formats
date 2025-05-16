@@ -14,7 +14,7 @@ package iso_bmff
 
 import "core:time"
 import "../common"
-import "core:runtime"
+import "base:runtime"
 import "core:reflect"
 import "core:fmt"
 
