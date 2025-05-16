@@ -34,7 +34,7 @@ package ebml
 	This file contains the base EBML types.
 */
 
-import "core:os"
+import os "core:os/os2"
 import "core:mem"
 import "core:time"
 import "../common"
@@ -115,11 +115,9 @@ EBML_Document :: struct {
 EBML_File :: struct {
 	documents:   [dynamic]^EBML_Document,
 
-	/*
-		Implementation
-	*/
+	// Implementation
 	file_info: os.File_Info,
-	handle:    os.Handle,
+	handle:    ^os.File,
 	allocator: mem.Allocator,
 }
 

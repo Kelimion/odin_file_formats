@@ -30,118 +30,63 @@ package file_format_common
 */
 
 import "base:intrinsics"
-import "base:runtime"
-import "core:io"
-import "core:os"
+import os "core:os/os2"
 
-Error :: union #shared_nil {
-	os.General_Error,
-	io.Error,
-	runtime.Allocator_Error,
-	os.Platform_Error,
-}
+Error :: os.Error
 
 SEEK_SET :: 0
 SEEK_CUR :: 1
 SEEK_END :: 2
 
-get_pos :: proc(f: os.Handle) -> (pos: i64, ok: bool) {
-	if p, e := os.seek(f, 0, os.SEEK_CUR); e == nil {
-		return p, true
-	}
-	return 0, false
+get_pos :: proc(f: ^os.File) -> (pos: i64, err: Error) {
+	p := os.seek(f, 0, .Current) or_return
+	return p, nil
 }
 
-set_pos :: proc(f: os.Handle, pos: i64) -> (ok: bool) {
-	if _, e := os.seek(f, pos, os.SEEK_SET); e == nil {
-		return true
-	}
-	return false
-}
-
-size :: proc(f: os.Handle) -> (res: i64, ok: bool) {
-	cur, end: i64
-	err: os.Errno
-
-	// Remember current position
-	if cur, ok = get_pos(f); !ok { return 0, ok }
-
-	if cur != 0 {
-		// Rewind
-		if ok = set_pos(f, 0); !ok { return 0, ok }
-	}
-	// Seek to end
-	if end, err = os.seek(f, 0, os.SEEK_END); err != nil { return 0, false }
-
-	// Restore original position
-	if ok = set_pos(f, cur); !ok { return 0, ok }
-
-	return end, true
+set_pos :: proc(f: ^os.File, pos: i64) -> (err: Error) {
+	os.seek(f, pos, .Start) or_return
+	return
 }
 
 @(optimization_mode="favor_size")
-read_slice :: #force_inline proc(fd: os.Handle, size: $S, allocator := context.temp_allocator, loc := #caller_location) -> (res: []u8, ok: bool) where intrinsics.type_is_integer(S) {
-	res = make([]u8, int(size), allocator, loc=loc)
-	if res == nil {
-		return nil, false
-	}
+read_slice :: #force_inline proc(fd: ^os.File, size: $S, allocator := context.temp_allocator, loc := #caller_location) -> (res: []u8, err: Error) where intrinsics.type_is_integer(S) {
+	res = make([]u8, int(size), allocator, loc=loc) or_return
 
 	bytes_read, read_err := os.read(fd, res)
-	if read_err != os.ERROR_NONE && read_err != os.ERROR_EOF {
+	if read_err != nil && read_err != .EOF {
 		delete(res)
-		return nil, false
+		return nil, .Unexpected_EOF
 	}
-	return res[:bytes_read], true
+	return res[:bytes_read], nil
 }
 
 @(optimization_mode="favor_size")
-read_data :: #force_inline proc(fd: os.Handle, $T: typeid, allocator := context.temp_allocator, loc := #caller_location) -> (res: T, ok: bool) {
-	b, e := read_slice(fd, size_of(T), loc=loc)
+read_data :: #force_inline proc(fd: ^os.File, $T: typeid, allocator := context.temp_allocator, loc := #caller_location) -> (res: T, err: Error) {
+	b := read_slice(fd, size_of(T), loc=loc) or_return
 
-	if e {
-		return (^T)(raw_data(b))^, e
-	}
-
-	return T{}, false
+	return (^T)(raw_data(b))^, nil
 }
 
 @(optimization_mode="favor_size")
-read_u8 :: #force_inline proc(fd: os.Handle, loc := #caller_location) -> (res: u8, ok: bool) {
-	b, e := read_slice(fd, 1, context.temp_allocator, loc=loc)
-	if e {
-		return b[0], e
-	}
-	return 0, e
+read_u8 :: #force_inline proc(fd: ^os.File, loc := #caller_location) -> (res: u8, err: Error) {
+	b := read_slice(fd, 1, context.temp_allocator, loc=loc) or_return
+	return b[0], nil
 }
 
 @(optimization_mode="favor_size")
-peek_data :: #force_inline proc(fd: os.Handle, $T: typeid, loc := #caller_location) -> (res: T, ok: bool) {
+peek_data :: #force_inline proc(fd: ^os.File, $T: typeid, loc := #caller_location) -> (res: T, err: Error) {
+	cur := get_pos(fd)  or_return
+	res  = read_data(fd, T, context.temp_allocator, loc=loc) or_return
+	set_pos(fd, cur) or_return
 
-	cur: i64
-	errno: os.Errno
-
-	// Remember current position
-	if cur, errno = os.seek(fd, 0, os.SEEK_CUR); errno != nil { return {}, false }
-
-	res, ok = read_data(fd, T, context.temp_allocator, loc=loc)
-
-	if _, errno = os.seek(fd, cur, os.SEEK_SET); errno != nil { return {}, false }
-
-	return res, ok
+	return res, nil
 }
 
 @(optimization_mode="favor_size")
-peek_u8 :: #force_inline proc(fd: os.Handle, allocator := context.temp_allocator, loc := #caller_location) -> (res: u8, ok: bool) {
+peek_u8 :: #force_inline proc(fd: ^os.File, allocator := context.temp_allocator, loc := #caller_location) -> (res: u8, err: Error) {
+	cur := get_pos(fd)  or_return
+	res  = read_data(fd, u8, context.temp_allocator, loc=loc) or_return
+	set_pos(fd, cur) or_return
 
-	cur: i64
-	errno: os.Errno
-
-	// Remember current position
-	if cur, errno = os.seek(fd, 0, os.SEEK_CUR); errno != nil { return {}, false }
-
-	res, ok = read_data(fd, u8, allocator, loc=loc)
-
-	if _, errno = os.seek(fd, cur, os.SEEK_SET); errno != nil { return {}, false }
-
-	return res, ok
+	return res, nil
 }

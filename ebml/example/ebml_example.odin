@@ -80,7 +80,7 @@ _main :: proc() {
 
 	size: i64
 	if return_after_cluster {
-		if pos, pos_ok := common.get_pos(f.handle); !pos_ok {
+		if pos, err := common.get_pos(f.handle); err != nil {
 			return
 		} else {
 			size = pos

@@ -34,7 +34,7 @@ package iso_bmff
 
 	This file contains box type definitions.
 */
-import "core:os"
+import os "core:os/os2"
 import "core:mem"
 
 /*
@@ -112,7 +112,7 @@ BMFF_File :: struct {
 
 	// Implementation
 	file_info: os.File_Info,
-	handle:    os.Handle,
+	handle:    ^os.File,
 	allocator: mem.Allocator,
 }
 

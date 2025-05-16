@@ -34,7 +34,7 @@ package ebml
 	This file contains the EBML format parser.
 */
 
-import "core:os"
+import os "core:os/os2"
 import "../common"
 
 DEBUG         :: #config(EBML_DEBUG, false)
@@ -51,18 +51,13 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 		}
 	}
 
-	offset: i64
-	ok:     bool
-
 	document: ^EBML_Document
 	parent:   ^EBML_Element
 	this:     ^EBML_Element
 	prev:     ^EBML_Element
 
-	/*
-		Read header.
-	*/
-	if offset, ok = common.get_pos(f.handle); !ok { return .Read_Error }
+	// Read header.
+	offset := common.get_pos(f.handle) or_return
 
 	id, id_size  := read_variable_id(f) or_return
 	if id != .EBML { return .EBML_Header_Missing_or_Corrupt }
@@ -108,18 +103,16 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 	prev            = this
 
 	loop: for {
-		if offset, ok = common.get_pos(f.handle); !ok { return .Read_Error }
+		offset = common.get_pos(f.handle) or_return
 		if offset > document.header.end {
-			/*
-				We're past the header.
-			*/
+			// We're past the header.
 			when DEBUG_VERBOSE >= 1 {
 				println(0, "Returning because we've parsed the header...\n")
 			}
-			break loop
+			return
 		}
 
-		id,     id_size     = read_variable_id(f) or_return
+		id,     id_size     = read_variable_id(f)  or_return
 		length, length_size = read_variable_int(f) or_return
 
 		if id == .EBML {
@@ -177,9 +170,7 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 			if this.parent.first_child == nil {
 				this.parent.first_child = this
 			} else {
-				/*
-					Chain.
-				*/
+				// Chain.
 				sibling := this.parent.first_child
 				for ; sibling.next != nil; sibling = sibling.next {}
 				sibling.next = this
@@ -192,9 +183,9 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 				Version of the EBML specifications used to create the EBML document.
 				Described in Section 11.2.2 of RFC 8794.
 			*/
-			if length != 1                                                       { return .EBML_Header_Unexpected_Field_Length }
-			if document.version, ok = common.read_u8(f.handle); !ok              { return .Read_Error }
-			if document.version != EBML_VERSION                                  { return .Unsupported_EBML_Version }
+			if length != 1                            { return .EBML_Header_Unexpected_Field_Length }
+			document.version = common.read_u8(f.handle) or_return
+			if document.version != EBML_VERSION       { return .Unsupported_EBML_Version }
 
 			this.type    = .Unsigned
 			this.payload = u64(document.version)
@@ -204,9 +195,9 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 				The minimum EBML version a reader has to support to read this document.
 				Described in Section 11.2.3 of RFC 8794.
 			*/
-			if length != 1                                                       { return .EBML_Header_Unexpected_Field_Length }
-			if document.read_version, ok = common.read_u8(f.handle); !ok         { return .Read_Error }
-			if document.read_version > EBML_VERSION                              { return .Unsupported_EBML_Version }
+			if length != 1                                 { return .EBML_Header_Unexpected_Field_Length }
+			document.read_version = common.read_u8(f.handle) or_return
+			if document.read_version > EBML_VERSION        { return .Unsupported_EBML_Version }
 
 			this.type    = .Unsigned
 			this.payload = u64(document.read_version)
@@ -220,8 +211,8 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 			if length != 1 { return .EBML_Header_Unexpected_Field_Length }
 
 
-			if document.max_id_length, ok = common.read_u8(f.handle); !ok        { return .Read_Error }
-			if document.max_id_length > 8 || document.max_id_length < 4          { return .Max_ID_Length_Invalid }
+			document.max_id_length = common.read_u8(f.handle)             or_return
+			if document.max_id_length > 8 || document.max_id_length < 4 { return .Max_ID_Length_Invalid }
 
 			this.type = .Unsigned
 			this.payload = u64(document.max_id_length)
@@ -234,8 +225,8 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 			*/
 			if length != 1 { return .EBML_Header_Unexpected_Field_Length }
 
-			if document.max_size_length, ok = common.read_u8(f.handle); !ok      { return .Read_Error }
-			if document.max_size_length > 8 || document.max_size_length == 0     { return .Max_Size_Invalid }
+			document.max_size_length = common.read_u8(f.handle)                or_return
+			if document.max_size_length > 8 || document.max_size_length == 0 { return .Max_Size_Invalid }
 
 			this.type = .Unsigned
 			this.payload = u64(document.max_size_length)
@@ -259,9 +250,9 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 				The version of DocType interpreter used to create the EBML Document.
 				Described in Section 11.2.7 of RFC 8794.
 			*/
-			if length != 1                                                       { return .EBML_Header_Unexpected_Field_Length }
-			if document.doctype_version, ok = common.read_u8(f.handle); !ok      { return .Read_Error }
-			if document.doctype_version == 0                                     { return .DocTypeVersion_Invalid }
+			if length != 1                                    { return .EBML_Header_Unexpected_Field_Length }
+			document.doctype_version = common.read_u8(f.handle) or_return
+			if document.doctype_version == 0                  { return .DocTypeVersion_Invalid }
 
 			this.type    = .Unsigned
 			this.payload = u64(document.doctype_version)
@@ -273,12 +264,11 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 			*/
 			if length != 1 { return .EBML_Header_Unexpected_Field_Length }
 
-			if document.doctype_read_version, ok = common.read_u8(f.handle); !ok { return .Read_Error }
-			if document.doctype_read_version == 0                                { return .DocTypeReadVersion_Invalid }
+			document.doctype_read_version = common.read_u8(f.handle) or_return
+			if document.doctype_read_version == 0                  { return .DocTypeReadVersion_Invalid }
 
 			this.type    = .Unsigned
 			this.payload = u64(document.doctype_read_version)
-
 
 		case .DocTypeExtension:
 			/*
@@ -306,12 +296,9 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 			*/
 			if length != 1 { return .EBML_Header_Unexpected_Field_Length }
 
-			if dtev, dtev_ok := common.read_u8(f.handle); !dtev_ok {
-				return .Read_Error
-			} else {
-				this.type    = .Unsigned
-				this.payload = u64(dtev)
-			}
+			dtev := common.read_u8(f.handle) or_return
+			this.type    = .Unsigned
+			this.payload = u64(dtev)
 
 		case .CRC_32:
 			/*
@@ -320,12 +307,10 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 				Described in Section 11.3.1 of RFC 8794.
 			*/
 			if length != 4 { return .Invalid_CRC_Size }
-			if crc32, crc32_ok := common.read_data(f.handle, u32); !crc32_ok {
-				return .Read_Error
-			} else {
-				this.type    = .Unsigned
-				this.payload = u64(crc32)
-			}
+
+			crc32 := common.read_data(f.handle, u32) or_return
+			this.type    = .Unsigned
+			this.payload = u64(crc32)
 
 		case .Void:
 			/*
@@ -336,10 +321,8 @@ parse_header :: proc(f: ^EBML_File, parse_metadata := true) -> (err: Error) {
 			fallthrough
 
 		case:
-			/*
-				We don't know this payload or there is no payload (Void), seek to next.
-			*/
-			if !common.set_pos(f.handle, this.end + 1) { return .Read_Error }
+			// We don't know this payload or there is no payload (Void), seek to next.
+			common.set_pos(f.handle, this.end + 1) or_return
 		}
 
 		prev = this
@@ -363,16 +346,11 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 		}
 	}
 
-	offset: i64
-	ok:     bool
+	offset              := common.get_pos(f.handle) or_return
+	id,     id_size     := read_variable_id(f)      or_return
+	length, length_size := read_variable_int(f)     or_return
 
-	if offset, ok = common.get_pos(f.handle); !ok { return .Read_Error }
-	id,     id_size     := read_variable_id(f) or_return
-	length, length_size := read_variable_int(f) or_return
-
-	/*
-		Set up common element members.
-	*/
+	// Set up common element members.
 	element := EBML_Element {
 		offset         = offset,
 		size           = i64(id_size) + i64(length_size) + i64(length),
@@ -392,26 +370,22 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 	prev              := this
 
 	loop: for {
-		if offset, ok = common.get_pos(f.handle); !ok { return .Read_Error }
+		offset = common.get_pos(f.handle) or_return
 		if offset >= f.file_info.size {
-			/*
-				We're past the header.
-			*/
+			// We're past the header.
 			when DEBUG_VERBOSE >= 1 {
 				println(0, "Returning because we're at the end of the file...\n")
 			}
-			break loop
+			return
 		}
 
-		id,     id_size     = read_variable_id(f) or_return
+		id,     id_size     = read_variable_id(f)  or_return
 		length, length_size = read_variable_int(f) or_return
 
 		if id == .EBML {
-			/*
-				New EBML stream starting.
-				Rewind to its offset and let the header parser handle it.
-			*/
-			if !common.set_pos(f.handle, offset) { return .Read_Error }
+			// New EBML stream starting.
+			// Rewind to its offset and let the header parser handle it.
+			common.set_pos(f.handle, offset) or_return
 			return
 		}
 
@@ -421,15 +395,11 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 			printf(1, "Length: %v, Length Size: %v\n",      length, length_size)
 		}
 
-		/*
-			Find the parent by what byte range of the file we're at.
-		*/
+		// Find the parent by what byte range of the file we're at.
 		parent = prev
 		for {
 			if offset >= parent.end {
-				/*
-					Parent can't contain this element. Let's look at its parent.
-				*/
+				// Parent can't contain this element. Let's look at its parent.
 				when DEBUG_VERBOSE >= 4 {
 					printf(2, "[%v] ends past ", _string(id))
 					printf(0, "[%v] end, checking if ", _string(parent.id))
@@ -437,9 +407,7 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 				}
 				parent = parent.parent
 			} else {
-				/*
-					Element fits within this parent.
-				*/
+				// Element fits within this parent.
 				break
 			}
 		}
@@ -480,12 +448,9 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 				Described in Section 11.3.1 of RFC 8794.
 			*/
 			if length != 4 { return .Invalid_CRC_Size }
-			if crc32, crc32_ok := common.read_data(f.handle, u32); !crc32_ok {
-				return .Read_Error
-			} else {
-				this.type    = .Unsigned
-				this.payload = u64(crc32)
-			}
+			crc32 := common.read_data(f.handle, u32) or_return
+			this.type    = .Unsigned
+			this.payload = u64(crc32)
 
 		case .Void:
 			/*
@@ -496,10 +461,8 @@ parse_generic_schema :: proc(f: ^EBML_File, document: ^EBML_Document) -> (err: E
 			fallthrough
 
 		case:
-			/*
-				We don't know this payload or there is no payload (Void), seek to next.
-			*/
-			if !common.set_pos(f.handle, this.end + 1) { return .Read_Error }
+			// We don't know this payload or there is no payload (Void), seek to next.
+			common.set_pos(f.handle, this.end + 1) or_return
 		}
 		prev = this
 	}
@@ -518,16 +481,11 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 		}
 	}
 
-	offset: i64
-	ok:     bool
+	offset              := common.get_pos(f.handle) or_return
+	id,     id_size     := read_variable_id(f)      or_return
+	length, length_size := read_variable_int(f)     or_return
 
-	if offset, ok = common.get_pos(f.handle); !ok { return .Read_Error }
-	id,     id_size     := read_variable_id(f) or_return
-	length, length_size := read_variable_int(f) or_return
-
-	/*
-		TODO(Jeroen): Do this only if we've just started parsing the body, not when we're parsing incrementally.
-	*/
+	// TODO(Jeroen): Do this only if we've just started parsing the body, not when we're parsing incrementally.
 	if id != .Matroska_Segment { return .Matroska_Body_Root_Wrong_ID }
 
 	/*
@@ -554,7 +512,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 	last_cluster: ^EBML_Element
 
 	loop: for {
-		if offset, ok = common.get_pos(f.handle); !ok { return .Read_Error }
+		offset = common.get_pos(f.handle) or_return
 
 		if return_after_cluster && last_cluster != nil {
 			if offset == last_cluster.end + 1 {
@@ -563,24 +521,20 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 		}
 
 		if offset >= f.file_info.size {
-			/*
-				We're past the header.
-			*/
+			// We're past the header.
 			when DEBUG_VERBOSE >= 1 {
 				println(0, "Returning because we're at the end of the file...\n")
 			}
-			break loop
+			return
 		}
 
-		id,     id_size     = read_variable_id(f) or_return
+		id,     id_size     = read_variable_id(f)  or_return
 		length, length_size = read_variable_int(f) or_return
 
 		if id == .EBML {
-			/*
-				New EBML stream starting.
-				Rewind to its offset and let the header parser handle it.
-			*/
-			if !common.set_pos(f.handle, offset) { return .Read_Error }
+			// New EBML stream starting.
+			// Rewind to its offset and let the header parser handle it.
+			common.set_pos(f.handle, offset) or_return
 			return
 		}
 
@@ -590,15 +544,11 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			printf(1, "Length: %v, Length Size: %v\n",      length, length_size)
 		}
 
-		/*
-			Find the parent by what byte range of the file we're at.
-		*/
+		// Find the parent by what byte range of the file we're at.
 		parent = prev
 		for {
 			if offset >= parent.end {
-				/*
-					Parent can't contain this element. Let's look at its parent.
-				*/
+				// Parent can't contain this element. Let's look at its parent.
 				when DEBUG_VERBOSE >= 4 {
 					printf(2, "[%v] ends past ", _string(id))
 					printf(0, "[%v] end, checking if ", _string(parent.id))
@@ -606,16 +556,12 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 				}
 				parent = parent.parent
 			} else {
-				/*
-					Element fits within this parent.
-				*/
+				// Element fits within this parent.
 				break
 			}
 		}
 
-		/*
-			Set up common element members.
-		*/
+		// Set up common element members.
 		element = EBML_Element {
 			offset         = offset,
 			size           = i64(id_size) + i64(length_size) + i64(length),
@@ -632,9 +578,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			if this.parent.first_child == nil {
 				this.parent.first_child = this
 			} else {
-				/*
-					Chain.
-				*/
+				// Chain.
 				sibling := this.parent.first_child
 				for ; sibling.next != nil; sibling = sibling.next {}
 				sibling.next = this
@@ -649,40 +593,27 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 				Described in Section 11.3.1 of RFC 8794.
 			*/
 			if length != 4 { return .Invalid_CRC_Size }
-			if crc32, crc32_ok := common.read_data(f.handle, u32); !crc32_ok {
-				return .Read_Error
-			} else {
-				this.type    = .Unsigned
-				this.payload = u64(crc32)
-			}
+			crc32 := common.read_data(f.handle, u32) or_return
+			this.type    = .Unsigned
+			this.payload = u64(crc32)
 
 		case .Matroska_SeekHead:
-			/*
-				Contains the Segment Position of other Top-Level Elements.
-			*/
-			this.type        = .Master
+			// Contains the Segment Position of other Top-Level Elements.
+			this.type    = .Master
 
 		case .Matroska_Seek:
-			/*
-				Contains a single seek entry to an EBML Element.
-			*/
-			this.type        = .Master
+			// Contains a single seek entry to an EBML Element.
+			this.type    = .Master
 
 		case .Matroska_SeekID:
-			/*
-				The binary ID corresponding to the Element name.
-			*/
+			// The binary ID corresponding to the Element name.
 			intern_binary(f, length, this) or_return
 
 		case .Matroska_SeekPosition:
-			/*
-				The Segment Position of the Element.
-			*/
+			// The Segment Position of the Element.
 			seek_pos := _read_uint(f, length) or_return
 
-			/*
-				SeekPosition is relative to the beginning of the SeekHead offset.
-			*/
+			// SeekPosition is relative to the beginning of the SeekHead offset.
 			if this.parent.id != .Matroska_Seek && this.parent.id != .Matroska_SeekHead { return .Matroska_Broken_SeekPosition }
 			seek_pos += u64(this.parent.parent.offset)
 
@@ -705,11 +636,8 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 
 			if length != 16 { return .Matroska_SegmentUID_Invalid_Length }
 
-			if payload, payload_ok := common.read_slice(f.handle, length); !payload_ok {
-				return .Read_Error
-			} else {
-				this.payload = (^Matroska_UUID)(raw_data(payload))^
-			}
+			payload := common.read_slice(f.handle, length) or_return
+			this.payload = (^Matroska_UUID)(raw_data(payload))^
 
 		case .Matroska_SegmentFilename, .Matroska_PrevFilename, .Matroska_NextFilename:
 			/*
@@ -719,9 +647,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			intern_utf8(f, length, this) or_return
 
 		case .Matroska_ChapterTranslate:
-			/*
-				A tuple of corresponding ID used by chapter codecs to represent this Segment.
-			*/
+			// A tuple of corresponding ID used by chapter codecs to represent this Segment.
 			this.type        = .Master
 
 		case .Matroska_ChapterTranslateEditionUID:
@@ -732,9 +658,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			intern_uint(f, length, this) or_return
 
 		case .Matroska_ChapterTranslateCodec:
-			/*
-				The chapter codec; see Section 8.1.7.1.4.15.
-			*/
+			// The chapter codec; see Section 8.1.7.1.4.15.
 			intern_uint(f, length, this) or_return
 
 		case .Matroska_ChapterTranslateID:
@@ -790,7 +714,7 @@ parse_matroska :: proc(f: ^EBML_File, document: ^EBML_Document, skip_clusters :=
 			last_cluster     = this
 
 			if skip_clusters {
-				if !common.set_pos(f.handle, this.end + 1) { return .Read_Error }	
+				common.set_pos(f.handle, this.end + 1) or_return
 			}
 
 		case .Matroska_Timestamp:
@@ -2148,9 +2072,7 @@ parse :: proc(f: ^EBML_File, parse_metadata := true, skip_clusters := true, retu
 		defer println(0, "Back from parsing...")
 	}
 
-	/*
-		Read header.
-	*/
+	// Read header.
 	parse_header(f) or_return
 	last_doc_idx := len(f.documents)
 	assert(last_doc_idx >= 1)
@@ -2160,36 +2082,25 @@ parse :: proc(f: ^EBML_File, parse_metadata := true, skip_clusters := true, retu
 
 	verify_crc32(f, h) or_return
 
-	/*
-		Read body.
-	*/
+	// Read body.
 	document := f.documents[last_doc_idx - 1]
 
 	switch document.doctype {
 	case "matroska":
-		/*
-			Matroska parse.
-		*/
+		// Matroska parse.
 		parse_matroska(f, document, skip_clusters, return_after_cluster) or_return
 
 	case "webm":
-		/*
-			WebM parse.
-		*/
+		// WebM parse.
 		parse_matroska(f, document, skip_clusters, return_after_cluster) or_return
 
 	case:
-		/*
-			Generic parse. Adds element nodes with their offset + length, default type and payload not interned.
-		*/
+		// Generic parse. Adds element nodes with their offset + length, default type and payload not interned.
 		parse_generic_schema(f, document) or_return
 	}
 
-	if offset, offset_ok := common.get_pos(f.handle); !offset_ok {
-		return .Read_Error
-	} else {
-		printf(0, "Done parsing at offset: %v\n", offset)
-	}
+	offset := common.get_pos(f.handle) or_return
+	printf(0, "Done parsing at offset: %v\n", offset)
 
 	return
 }
@@ -2197,27 +2108,19 @@ parse :: proc(f: ^EBML_File, parse_metadata := true, skip_clusters := true, retu
 open_from_filename :: proc(filename: string, allocator := context.allocator) -> (file: ^EBML_File, err: Error) {
 	context.allocator = allocator
 
-	fd, os_err := os.open(filename, os.O_RDONLY, 0)
-	if os_err == nil {
-		return open_from_handle(fd, allocator)
-	}
-	return {}, .File_Not_Found
+	fd := os.open(filename, os.O_RDONLY, 0) or_return
+	return open_from_handle(fd, allocator)
 }
 
-open_from_handle :: proc(handle: os.Handle, allocator := context.allocator) -> (file: ^EBML_File, err: Error) {
+open_from_handle :: proc(handle: ^os.File, allocator := context.allocator) -> (file: ^EBML_File, err: Error) {
 	context.allocator = allocator
 
 	file = new(EBML_File, allocator)
 	file.allocator = allocator
 	file.handle    = handle
+	file.file_info = os.fstat(handle, allocator) or_return
 
-	os_err: os.Errno
-	file.file_info, os_err = os.fstat(handle)
-
-	if file.file_info.size == 0 || os_err != nil {
-		when DEBUG {
-			printf(0, "OS returned: %v\n", os_err)
-		}
+	if file.file_info.size == 0 {
 		close(file)
 		return file, .File_Empty
 	}
@@ -2273,8 +2176,8 @@ close :: proc(f: ^EBML_File) {
 
 	delete(f.documents)
 
-	os.file_info_delete(f.file_info)
-	if f.handle != 0 {
+	os.file_info_delete(f.file_info, f.allocator)
+	if f.handle != nil {
 		os.close(f.handle)
 	}
 	free(f)

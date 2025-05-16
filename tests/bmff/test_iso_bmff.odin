@@ -27,8 +27,7 @@
 
 	A test suite for the ISO Base Media File Format package
 */
-package test_core_image
-
+package test_bmff
 import "core:testing"
 
 import "../../bmff"

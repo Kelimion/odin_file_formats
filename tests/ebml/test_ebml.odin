@@ -27,7 +27,7 @@
 
 	A test suite for the EBML/Matroska/WebM package
 */
-package test_core_image
+package test_ebml
 
 import "core:testing"
 import "../../ebml"

@@ -35,7 +35,7 @@ package iso_bmff
 	This file contains the base media format parser.
 */
 
-import "core:os"
+import os "core:os/os2"
 @(require) import "core:fmt"
 import "../common"
 
@@ -126,38 +126,27 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 	prev:         ^BMFF_Box = f.itunes_metadata
 	parent:       ^BMFF_Box = f.itunes_metadata
 
-	ok:           bool
-
 	loop: for {
-		/*
-			Peek at header and check if this would put us past the end of the iTunes metadata.
-		*/
-		h, err = read_box_header(fd=fd, read=false)
+		// Peek at header and check if this would put us past the end of the iTunes metadata.
+		h = read_box_header(fd=fd, read=false) or_return
 		if h.offset >= f.root.end || h.offset > f.itunes_metadata.end {
 			// Done.
 			return
 		}
 
-		/*
-			Now read it for real.
-		*/
-		if h, err = read_box_header(fd=fd, read=true); err != nil { return .Error_Parsing_iTunes_Metadata }
+		// Now read it for real.
+		h = read_box_header(fd=fd, read=true) or_return
 
-		/*
-			Create box and set type, size, parent, etc.
-		*/
+		// Create box and set type, size, parent, etc.
 		#partial switch h.type {
 		case .Data:
 			if parent == f.itunes_metadata {
-				/*
-					Fold data into parent.
-				*/
+				// Fold data into parent.
 				metadata := iTunes_Metadata{}
 
-				if metadata._ilst_data, ok = common.read_data(fd, _ILST_DATA); !ok { return .Read_Error }
+				metadata._ilst_data = common.read_data(fd, _ILST_DATA) or_return
 
-				payload: []u8
-				if payload, ok = common.read_slice(fd, h.payload_size - size_of(_ILST_DATA), f.allocator); !ok { return .Read_Error }
+				payload := common.read_slice(fd, h.payload_size - size_of(_ILST_DATA), f.allocator) or_return
 
 				#partial switch metadata.type {
 				case .Text:
@@ -237,8 +226,7 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 				*/
 				if parent.parent == f.itunes_metadata {
 					skip = false
-					payload: []u8
-					if payload, ok = common.read_slice(fd, box.payload_size); !ok { return .Read_Error }
+					payload := common.read_slice(fd, box.payload_size) or_return
 					intern_payload(box, payload)
 				}
 			}
@@ -248,14 +236,12 @@ parse_itunes_metadata :: proc(f: ^BMFF_File) -> (err: Error) {
 			}
 
 		case .iTunes_Extended:
-			payload: []u8
-			if payload, ok = common.read_slice(fd, box.payload_size); !ok { return .Read_Error }
+			payload := common.read_slice(fd, box.payload_size) or_return
 			intern_payload(box, payload)
 		}
 
 		prev = box
 	}
-
 	return
 }
 
@@ -274,11 +260,7 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 	prev:         ^BMFF_Box = f.root
 	parent:       ^BMFF_Box = f.root
 
-	ok:           bool
-
-	/*
-		Most files start with an 'ftyp' atom.
-	*/
+	// Most files start with an 'ftyp' atom.
 	h = read_box_header(fd=fd, read=false) or_return
 	if h.type != .File_Type {
 		/*
@@ -389,15 +371,12 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 				return .FTYP_Invalid_Size
 			}
 
-			_ftyp: _FTYP
-			if _ftyp, ok = common.read_data(fd, _FTYP); !ok { return .Read_Error }
-
-			ftyp := FTYP{ header = _ftyp, }
-			compat: FourCC    
+			_ftyp := common.read_data(fd, _FTYP) or_return
+			ftyp  := FTYP{ header = _ftyp, }
 
 			compat_count := (box.payload_size - size_of(_FTYP)) / size_of(FourCC)
 			for _ in 0..<compat_count {
-				if compat, ok = common.read_data(fd, FourCC); !ok { return .Read_Error }
+				compat := common.read_data(fd, FourCC) or_return
 				append(&ftyp.compatible, compat)
 			}
 			box.payload = ftyp
@@ -408,19 +387,18 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 		case .Movie_Header:
 			f.mvhd = box
 
-			version: u8
-			if version, ok = common.peek_data(fd, u8); !ok { return .Read_Error }
-			if version > 1                                 { return .MVHD_Unknown_Version }
+			version := common.peek_u8(fd) or_return
+			if version > 1 { return .MVHD_Unknown_Version }
 
 			switch version {
 			case 0:
 				if box.payload_size != size_of(MVHD_V0) { return .MVHD_Invalid_Size }
-				if box.payload, ok = common.read_data(fd, MVHD_V0); !ok { return .Read_Error }
+				box.payload = common.read_data(fd, MVHD_V0) or_return
 
 				f.time_scale = box.payload.(MVHD_V0).time_scale
 			case 1:
 				if box.payload_size != size_of(MVHD_V1) { return .MVHD_Invalid_Size }
-				if box.payload, ok = common.read_data(fd, MVHD_V1); !ok { return .Read_Error }
+				box.payload = common.read_data(fd, MVHD_V1) or_return
 
 				f.time_scale = box.payload.(MVHD_V1).time_scale
 			case:
@@ -430,17 +408,16 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 		case .Track:
 
 		case .Track_Header:
-			version: u8
-			if version, ok = common.peek_data(fd, u8); !ok { return .Read_Error }
-			if version > 1                                 { return .TKHD_Unknown_Version }
+			version := common.peek_u8(fd) or_return
+			if version > 1 { return .TKHD_Unknown_Version }
 
 			switch version {
 			case 0:
-				if box.payload_size != size_of(TKHD_V0)                 { return .TKHD_Invalid_Size }
-				if box.payload, ok = common.read_data(fd, TKHD_V0); !ok { return .Read_Error }
+				if box.payload_size != size_of(TKHD_V0) { return .TKHD_Invalid_Size }
+				box.payload = common.read_data(fd, TKHD_V0) or_return
 			case 1:
-				if box.payload_size != size_of(TKHD_V1)                 { return .TKHD_Invalid_Size }
-				if box.payload, ok = common.read_data(fd, TKHD_V1); !ok { return .Read_Error }
+				if box.payload_size != size_of(TKHD_V1) { return .TKHD_Invalid_Size }
+				box.payload = common.read_data(fd, TKHD_V1) or_return
 			case:
 				unreachable()
 			}
@@ -448,22 +425,18 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 		case .Edit:
 
 		case .Edit_List:
-			version: u8
-			if version, ok = common.peek_data(fd, u8); !ok     { return .Read_Error }
-			if version > 1                                     { return .ELST_Unknown_Version }
+			version := common.peek_u8(fd) or_return
+			if version > 1 { return .ELST_Unknown_Version }
 
-			elst_hdr: _ELST
-			if elst_hdr, ok = common.read_data(fd, _ELST); !ok { return .Read_Error }
+			elst_hdr := common.read_data(fd, _ELST) or_return
 
 			switch version {
 			case 0:
 				if box.payload_size != i64(size_of(_ELST)) + i64(elst_hdr.entry_count) * size_of(ELST_Entry_V0) { return .ELST_Invalid_Size }
 
 				elst := ELST_V0{ header = elst_hdr }
-				entry: ELST_Entry(u32be)
-
 				for _ in 0..<elst_hdr.entry_count {
-					if entry, ok = common.read_data(fd, ELST_Entry(u32be)); !ok { return .Read_Error }
+					entry := common.read_data(fd, ELST_Entry(u32be)) or_return
 					append(&elst.entries, entry)
 				}
 				box.payload = elst
@@ -471,10 +444,8 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 				if box.payload_size != i64(size_of(_ELST)) + i64(elst_hdr.entry_count) * size_of(ELST_Entry_V1) { return .ELST_Invalid_Size }
 
 				elst := ELST_V1{ header = elst_hdr }
-				entry: ELST_Entry(u64be)
-
 				for _ in 0..<elst_hdr.entry_count {
-					if entry, ok = common.read_data(fd, ELST_Entry(u64be)); !ok { return .Read_Error }
+					entry := common.read_data(fd, ELST_Entry(u64be)) or_return
 					append(&elst.entries, entry)
 				}
 				box.payload = elst
@@ -485,17 +456,16 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 		case .Media:
 
 		case .Media_Header:
-			version: u8
-			if version, ok = common.peek_data(fd, u8); !ok { return .Read_Error }
-			if version > 1                                 { return .MDHD_Unknown_Version }
+			version := common.peek_u8(fd) or_return
+			if version > 1 { return .MDHD_Unknown_Version }
 
 			switch version {
 			case 0:
-				if box.payload_size != size_of(MDHD_V0)    { return .MDHD_Invalid_Size }
-				if box.payload, ok = common.read_data(fd, MDHD_V0); !ok { return .Read_Error }
+				if box.payload_size != size_of(MDHD_V0) { return .MDHD_Invalid_Size }
+				box.payload = common.read_data(fd, MDHD_V0) or_return
 			case 1:
-				if box.payload_size != size_of(MDHD_V1)    { return .MDHD_Invalid_Size }
-				if box.payload, ok = common.read_data(fd, MDHD_V1); !ok { return .Read_Error }
+				if box.payload_size != size_of(MDHD_V1) { return .MDHD_Invalid_Size }
+				box.payload = common.read_data(fd, MDHD_V1) or_return
 			case:
 				unreachable()
 			}
@@ -508,15 +478,13 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			if !(box.parent.type == .Media || box.parent.type == .Meta) {
 				return .HDLR_Unexpected_Parent
 			}
-			if box.payload_size < size_of(_HDLR)            { return .HDLR_Invalid_Size }
+			if box.payload_size < size_of(_HDLR) { return .HDLR_Invalid_Size }
 
-			_hdlr: _HDLR
-			if _hdlr, ok = common.read_data(fd, _HDLR); !ok { return .Read_Error }
+			_hdlr := common.read_data(fd, _HDLR) or_return
 			hdlr := HDLR { _hdlr = _hdlr }
 
-			name_bytes: []u8
-			if name_bytes, ok = common.read_slice(fd, box.payload_size - size_of(_HDLR), f.allocator); !ok { return .Read_Error }
-			hdlr.name = cstring(raw_data(name_bytes))
+			name_bytes := common.read_slice(fd, box.payload_size - size_of(_HDLR), f.allocator) or_return
+			hdlr.name   = cstring(raw_data(name_bytes))
 			box.payload = hdlr
 
 		case .User_Data:
@@ -525,25 +493,21 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			}
 
 		case .Meta:
-			payload: []u8
-			if payload, ok = common.read_slice(fd, size_of(META)); !ok { return .Read_Error }
+			payload := common.read_slice(fd, size_of(META)) or_return
 			intern_payload(box, payload)
 
 		case .iTunes_Metadata:
 			f.itunes_metadata = box
 
 			if parse_metadata {
-				/*
-					Apple Metadata. Not part of the ISO standard, but we'll handle it anyway.
-				*/
+				// Apple Metadata. Not part of the ISO standard, but we'll handle it anyway.
 				parse_itunes_metadata(f) or_return
 			} else {
 				skip_box(fd, box) or_return
 			}
 		case .Name:
 			if parent.type == .User_Data {
-				payload: []u8
-				if payload, ok = common.read_slice(fd, box.payload_size); !ok { return .Read_Error }
+				payload := common.read_slice(fd, box.payload_size) or_return
 				intern_payload(box, payload)
 
 			} else {
@@ -552,42 +516,34 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 
 		case .Chapter_List:
 			if parent.type == .User_Data {
-				vf: Version_and_Flags
-				if vf, ok = common.read_data(fd, Version_and_Flags); !ok { return .Read_Error }
-				if vf.version > 1                                        { return .CHPL_Unknown_Version }
+				vf := common.read_data(fd, Version_and_Flags) or_return
+				if vf.version > 1 { return .CHPL_Unknown_Version }
 
 				entry_count: u32be
-				short_count: u8
-				reserved:    u8
 
 				if vf.version == 0 {
-					if short_count, ok = common.read_u8(fd); !ok          { return .Read_Error }
-					entry_count        = u32be(short_count)
+					short_count := common.read_u8(fd) or_return
+					entry_count  = u32be(short_count)
 				} else {
-					if reserved, ok    = common.read_u8(fd); !ok          { return .Read_Error }
-					if entry_count, ok = common.read_data(fd, u32be); !ok { return .Read_Error }
+					common.read_u8(fd) or_return // Skip reserved field
+					entry_count  = common.read_data(fd, u32be) or_return
 				}
 
 				chapter_list := Chapter_List{}
 				for i := u32be(0); i < entry_count; i += 1 {
-					_entry: _Chapter_Entry
-					if _entry, ok = common.read_data(fd, _Chapter_Entry); !ok { return .Read_Error }
-					if title_bytes, _ok := common.read_slice(fd, _entry.title_size, f.allocator); _ok {
-						entry := Chapter_Entry{
-							timestamp = _entry.timestamp,
-							title     = string(title_bytes),
-						}
-						append(&chapter_list.chapters, entry)
-					} else {
-						return .Read_Error
+					_entry      := common.read_data(fd, _Chapter_Entry) or_return
+					title_bytes := common.read_slice(fd, _entry.title_size, f.allocator) or_return
+					entry := Chapter_Entry{
+						timestamp = _entry.timestamp,
+						title     = string(title_bytes),
 					}
+					append(&chapter_list.chapters, entry)
 				}
 				box.payload = chapter_list
 
-				/*
-					Read cursor should be one past the end of the expected box end.
-				*/
-				if cur_pos, cur_ok := common.get_pos(fd); !(cur_ok && cur_pos == box.end + 1) { return .CHPL_Invalid_Size }
+				// Read cursor should be one past the end of the expected box end.
+				cur_pos := common.get_pos(fd) or_return
+				if !(cur_pos == box.end + 1) { return .CHPL_Invalid_Size }
 			} else {
 				skip_box(fd, box) or_return
 			}
@@ -612,55 +568,44 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 	return
 }
 
-skip_box :: proc(fd: os.Handle, box: ^BMFF_Box) -> (err: Error) {
+skip_box :: proc(fd: ^os.File, box: ^BMFF_Box) -> (err: Error) {
 	assert(box != nil)
-	if !common.set_pos(fd, box.end + 1) {
-		return .Read_Error
-	}
+	common.set_pos(fd, box.end + 1) or_return
 	return
 }
 
-read_box_header :: #force_inline proc(fd: os.Handle, read := true) -> (header: BMFF_Box_Header, err: Error) {
-	h:    _BMFF_Box_Header
-	e:    bool
+read_box_header :: #force_inline proc(fd: ^os.File, read := true) -> (header: BMFF_Box_Header, err: Error) {
+	h: _BMFF_Box_Header
 
-	if header.offset, e   = common.get_pos(fd); !e { return header, .Read_Error }
+	header.offset         = common.get_pos(fd) or_return
 	header.payload_offset = header.offset
 
 	/*
 		Read the basic box header.
 	*/
-	if h, e = common.read_data(fd, _BMFF_Box_Header); !e { return header, .Read_Error }
+	h = common.read_data(fd, _BMFF_Box_Header) or_return
 
 	header.size            = i64(h.size)
 	header.type            = h.type
 	header.payload_offset += size_of(_BMFF_Box_Header)
 
 	if header.size == 1 {
-		/*
-			This atom has a 64-bit size.
-		*/
-		hsize: u64be
-		if hsize, e = common.read_data(fd, u64be); !e { return header, .Read_Error }
+		// This atom has a 64-bit size.
+		hsize := common.read_data(fd, u64be) or_return
 		header.payload_offset += size_of(u64be)
 		header.size            = i64(hsize)
 
 	} else if header.size == 0 {
-		/*
-			This atom runs until the end of the file.
-		*/
-		file_size: i64
-		if file_size, e = common.size(fd); !e { return header, .Read_Error }
+		// This atom runs until the end of the file.
+		file_size := os.file_size(fd) or_return
 		header.size = file_size - header.offset
 	}
 
 	header.end = header.offset + header.size - 1
 
 	if header.type == .UUID {
-		/*
-			Read extended type.
-		*/
-		if header.uuid, e = common.read_data(fd, UUID); !e { return header, .Read_Error }
+		// Read extended type.
+		header.uuid = common.read_data(fd, UUID) or_return
 		header.payload_offset += size_of(UUID)
 	}
 
@@ -680,12 +625,12 @@ read_box_header :: #force_inline proc(fd: os.Handle, read := true) -> (header: B
 		}
 	}
 
-	/*
-		Rewind if peeking.
-	*/
-	if !read && !common.set_pos(fd, header.offset) { return header, .Read_Error }
+	// Rewind if peeking.
+	if !read {
+		common.set_pos(fd, header.offset) or_return
+	}
 
-	return header, nil if e else .Read_Error
+	return
 }
 
 open_from_filename :: proc(filename: string, allocator := context.allocator) -> (file: ^BMFF_File, err: Error) {
@@ -698,20 +643,15 @@ open_from_filename :: proc(filename: string, allocator := context.allocator) -> 
 	return {}, .File_Not_Found
 }
 
-open_from_handle :: proc(handle: os.Handle, allocator := context.allocator) -> (file: ^BMFF_File, err: Error) {
+open_from_handle :: proc(handle: ^os.File, allocator := context.allocator) -> (file: ^BMFF_File, err: Error) {
 	context.allocator = allocator
 
 	file = new(BMFF_File, allocator)
 	file.allocator = allocator
 	file.handle    = handle
+	file.file_info = os.fstat(handle, allocator) or_return
 
-	os_err: os.Errno
-	file.file_info, os_err = os.fstat(handle)
-
-	if file.file_info.size == 0 || os_err != nil {
-		when DEBUG {
-			fmt.printf("OS returned: %v\n", os_err)
-		}
+	if file.file_info.size == 0 {
 		close(file)
 		return file, .File_Empty
 	}
@@ -740,8 +680,8 @@ close :: proc(file: ^BMFF_File) {
 		fmt.println("\n-=-=-=-=-=-=- CLEANING UP -=-=-=-=-=-=-")
 	}
 
-	os.file_info_delete(file.file_info)
-	if file.handle != 0 {
+	os.file_info_delete(file.file_info, file.allocator)
+	if file.handle != nil {
 		os.close(file.handle)
 	}
 	if file.root != nil {
