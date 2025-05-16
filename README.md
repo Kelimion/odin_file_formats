@@ -46,4 +46,14 @@ Implemented from [RFC 8794](https://datatracker.ietf.org/doc/rfc8794/) and the [
 
 ## Other file formats
 
-TBD. Various compression algoritms and file formats are under construction in my compression repository.
+TBD.
+
+## Revisions
+### 2025-05-16
+Jeroen van Rijn <nom@duclavier.com>:
+- BMFF + EBML: Compile with all the -vet vlags
+- BMFF + EBML: Remove placeholder test framework
+
+### 2021-11
+Jeroen van Rijn <nom@duclavier.com>:
+- BMFF + EBML: Initial implementations
