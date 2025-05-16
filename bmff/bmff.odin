@@ -36,10 +36,7 @@ package iso_bmff
 */
 
 import "core:os"
-import "core:fmt"
-
-_ :: fmt.println
-
+@(require) import "core:fmt"
 import "../common"
 
 DEBUG         :: #config(BMFF_DEBUG, false)
@@ -51,8 +48,7 @@ intern_payload :: proc(box: ^BMFF_Box, payload: $T, loc := #caller_location) {
 		append(&box.payload.([dynamic]u8), ..payload)
 
 	} else {
-		unhandled := fmt.tprintf("Unhandled: intern_payload(%v), called from %v\n", typeid_of(T), loc)
-		panic(unhandled)
+		fmt.panicf("Unhandled: intern_payload(%v), called from %v\n", typeid_of(T), loc)
 	}
 }
 
@@ -100,8 +96,7 @@ free_atom :: proc(atom: ^BMFF_Box, allocator := context.allocator) {
 			case iTunes_Track, iTunes_Disk:
 
 			case:
-				unhandled := fmt.tprintf("free_atom: Unhandled payload type: %v\n", v)
-				panic(unhandled)
+				fmt.panicf("free_atom: Unhandled payload type: %v\n", v)
 			}
 		}
 
