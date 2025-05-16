@@ -1,6 +1,6 @@
 @echo off
 set PATH_TO_ODIN=odin
-set COMMON=-show-timings -no-bounds-check -vet -strict-style
+set COMMON=-show-timings -vet -vet-tabs -strict-style -vet-style -warnings-as-errors -disallow-do
 echo ---
 echo Running ISO Base Media File Format tests
 echo ---

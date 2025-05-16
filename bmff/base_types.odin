@@ -85,28 +85,28 @@ FourCC :: enum common.FourCC {
 				*/
 				iTunes_Metadata         = 'i' << 24 | 'l' << 16 | 's' << 8 | 't', // 0x696c7374
 
-    				iTunes_Album            = '©' << 24 | 'a' << 16 | 'l' << 8 | 'b', // 0xa9616c62
-    				iTunes_Album_Artist     = 'a' << 24 | 'A' << 16 | 'R' << 8 | 'T', // 0x61415254
-    				iTunes_Author           = '©' << 24 | 'A' << 16 | 'R' << 8 | 'T', // 0xa9415254
+				iTunes_Album            = '©' << 24 | 'a' << 16 | 'l' << 8 | 'b', // 0xa9616c62
+				iTunes_Album_Artist     = 'a' << 24 | 'A' << 16 | 'R' << 8 | 'T', // 0x61415254
+				iTunes_Author           = '©' << 24 | 'A' << 16 | 'R' << 8 | 'T', // 0xa9415254
 				ìTunes_Category         = 'c' << 24 | 'a' << 16 | 't' << 8 | 'g', // 0x63617467
-    				iTunes_Comment          = '©' << 24 | 'c' << 16 | 'm' << 8 | 't', // 0xa9636d74
-    				iTunes_Composer         = '©' << 24 | 'w' << 16 | 'r' << 8 | 't', // 0xa9777274
-    				iTunes_Copyright        = 'c' << 24 | 'p' << 16 | 'r' << 8 | 't', // 0x63707274
-    				iTunes_Copyright_Alt    = '©' << 24 | 'c' << 16 | 'p' << 8 | 'y', // 0xa9637079
-	   			iTunes_Cover            = 'c' << 24 | 'o' << 16 | 'v' << 8 | 'r', // 0x636f7672
-    				iTunes_Description      = 'd' << 24 | 'e' << 16 | 's' << 8 | 'c', // 0x64657363
-    				iTunes_Disk             = 'd' << 24 | 'i' << 16 | 's' << 8 | 'k', // 0x6469736b
-    				iTunes_Encoder          = '©' << 24 | 't' << 16 | 'o' << 8 | 'o', // 0xa9746f6f
+				iTunes_Comment          = '©' << 24 | 'c' << 16 | 'm' << 8 | 't', // 0xa9636d74
+				iTunes_Composer         = '©' << 24 | 'w' << 16 | 'r' << 8 | 't', // 0xa9777274
+				iTunes_Copyright        = 'c' << 24 | 'p' << 16 | 'r' << 8 | 't', // 0x63707274
+				iTunes_Copyright_Alt    = '©' << 24 | 'c' << 16 | 'p' << 8 | 'y', // 0xa9637079
+				iTunes_Cover            = 'c' << 24 | 'o' << 16 | 'v' << 8 | 'r', // 0x636f7672
+				iTunes_Description      = 'd' << 24 | 'e' << 16 | 's' << 8 | 'c', // 0x64657363
+				iTunes_Disk             = 'd' << 24 | 'i' << 16 | 's' << 8 | 'k', // 0x6469736b
+				iTunes_Encoder          = '©' << 24 | 't' << 16 | 'o' << 8 | 'o', // 0xa9746f6f
 				ìTunes_Episode_GUID     = 'e' << 24 | 'g' << 16 | 'i' << 8 | 'd', // 0x65676964
-    				iTunes_Episode_Name     = 't' << 24 | 'v' << 16 | 'e' << 8 | 'n', // 0x7476656e
+				iTunes_Episode_Name     = 't' << 24 | 'v' << 16 | 'e' << 8 | 'n', // 0x7476656e
 				ìTunes_Gapless_Playback = 'p' << 24 | 'g' << 16 | 'a' << 8 | 'p', // 0x70676170
-    				iTunes_Genre            = '©' << 24 | 'g' << 16 | 'e' << 8 | 'n', // 0xa967656e
-    				iTunes_Grouping         = '©' << 24 | 'g' << 16 | 'r' << 8 | 'p', // 0xa9677270
+				iTunes_Genre            = '©' << 24 | 'g' << 16 | 'e' << 8 | 'n', // 0xa967656e
+				iTunes_Grouping         = '©' << 24 | 'g' << 16 | 'r' << 8 | 'p', // 0xa9677270
 				ìTunes_Keywords         = 'k' << 24 | 'e' << 16 | 'y' << 8 | 'w', // 0x6b657977
 				ìTunes_Lyricist         = '©' << 24 | 's' << 16 | 'w' << 8 | 'f', // 0xa9737766
-    				iTunes_Lyrics           = '©' << 24 | 'l' << 16 | 'y' << 8 | 'r', // 0xa96c7972
+				iTunes_Lyrics           = '©' << 24 | 'l' << 16 | 'y' << 8 | 'r', // 0xa96c7972
 				ìTunes_Media_Type       = 's' << 24 | 't' << 16 | 'i' << 8 | 'k', // 0x7374696b
-    				iTunes_Network          = 't' << 24 | 'v' << 16 | 'n' << 8 | 'n', // 0x74766e6e
+				iTunes_Network          = 't' << 24 | 'v' << 16 | 'n' << 8 | 'n', // 0x74766e6e
 				ìTunes_Performers       = '©' << 24 | 'p' << 16 | 'r' << 8 | 'f', // 0xa9707266
 				ìTunes_Podcast          = 'p' << 24 | 'c' << 16 | 's' << 8 | 't', // 0x70637374
 				ìTunes_Podcast_URL      = 'p' << 24 | 'u' << 16 | 'r' << 8 | 'l', // 0x7075726c
@@ -115,22 +115,22 @@ FourCC :: enum common.FourCC {
 				ìTunes_Purchase_Date    = 'p' << 24 | 'u' << 16 | 'r' << 8 | 'd', // 0x70757264
 				ìTunes_Rating           = 'r' << 24 | 't' << 16 | 'n' << 8 | 'g', // 0x72746e67
 				ìTunes_Record_Label     = '©' << 24 | 'l' << 16 | 'a' << 8 | 'b', // 0xa96c6162
-    				iTunes_Role             = 'r' << 24 | 'o' << 16 | 'l' << 8 | 'e', // 0x726f6c65
-    				iTunes_Show             = 't' << 24 | 'v' << 16 | 's' << 8 | 'h', // 0x74767368
-    				iTunes_Synopsis         = 'l' << 24 | 'd' << 16 | 'e' << 8 | 's', // 0x6c646573
-    				iTunes_Tempo            = 't' << 24 | 'm' << 16 | 'p' << 8 | 'o', // 0x746d706f
-    				iTunes_Title            = '©' << 24 | 'n' << 16 | 'a' << 8 | 'm', // 0xa96e616d
-    				iTunes_Track            = 't' << 24 | 'r' << 16 | 'k' << 8 | 'n', // 0x74726b6e
-    				iTunes_Year             = '©' << 24 | 'd' << 16 | 'a' << 8 | 'y', // 0xa9646179
+				iTunes_Role             = 'r' << 24 | 'o' << 16 | 'l' << 8 | 'e', // 0x726f6c65
+				iTunes_Show             = 't' << 24 | 'v' << 16 | 's' << 8 | 'h', // 0x74767368
+				iTunes_Synopsis         = 'l' << 24 | 'd' << 16 | 'e' << 8 | 's', // 0x6c646573
+				iTunes_Tempo            = 't' << 24 | 'm' << 16 | 'p' << 8 | 'o', // 0x746d706f
+				iTunes_Title            = '©' << 24 | 'n' << 16 | 'a' << 8 | 'm', // 0xa96e616d
+				iTunes_Track            = 't' << 24 | 'r' << 16 | 'k' << 8 | 'n', // 0x74726b6e
+				iTunes_Year             = '©' << 24 | 'd' << 16 | 'a' << 8 | 'y', // 0xa9646179
 				ìTunes_TV_Episode       = 't' << 24 | 'v' << 16 | 'e' << 8 | 's', // 0x74766573
 				ìTunes_TV_Season        = 't' << 24 | 'v' << 16 | 's' << 8 | 'n', // 0x7476736e
 
-   				/*
+				/*
 					Special. Found at the end of M4A audio book metadata, for example.
 					`----` has no data sub-node.
-   				*/
-   				iTunes_Extended         = '-' << 24 | '-' << 16 | '-' << 8 | '-', // 0x2d2d2d2d
-   					iTunes_Mean     = 'm' << 24 | 'e' << 16 | 'a' << 8 | 'n', // 
+				*/
+				iTunes_Extended         = '-' << 24 | '-' << 16 | '-' << 8 | '-', // 0x2d2d2d2d
+					iTunes_Mean     = 'm' << 24 | 'e' << 16 | 'a' << 8 | 'n', //
 
 	Movie_Fragment                                  = 'm' << 24 | 'o' << 16 | 'o' << 8 | 'f', // 0x6d6f6f66
 		Track_Fragment                          = 't' << 24 | 'r' << 16 | 'a' << 8 | 'f', // 0x74726166
@@ -173,7 +173,7 @@ FourCC :: enum common.FourCC {
 
 /*
 	UUIDs are compliant with RFC 4122: A Universally Unique IDentifier (UUID) URN Namespace
-	                         (https://www.rfc-editor.org/rfc/rfc4122.html)
+				 (https://www.rfc-editor.org/rfc/rfc4122.html)
 */
 UUID :: common.UUID_RFC_4122
 

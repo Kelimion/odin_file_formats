@@ -675,18 +675,9 @@ open_from_filename :: proc(filename: string, allocator := context.allocator) -> 
 	context.allocator = allocator
 
 	fd, os_err := os.open(filename, os.O_RDONLY, 0)
-
-	switch os_err {
-	case 0:
-		// Success
-		if os_err != 0 {
-			os.close(fd)
-			return {}, .File_Not_Found
-		}
-
+	if os_err == nil {
 		return open_from_handle(fd, allocator)
 	}
-
 	return {}, .File_Not_Found
 }
 
@@ -700,7 +691,7 @@ open_from_handle :: proc(handle: os.Handle, allocator := context.allocator) -> (
 	os_err: os.Errno
 	file.file_info, os_err = os.fstat(handle)
 
-	if file.file_info.size == 0 || os_err != 0 {
+	if file.file_info.size == 0 || os_err != nil {
 		when DEBUG {
 			fmt.printf("OS returned: %v\n", os_err)
 		}
