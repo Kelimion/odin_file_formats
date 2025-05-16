@@ -29,9 +29,10 @@ package iso_bmff_example
 	This file is an example that parses an ISO base media file (mp4/m4a/...) and prints the parse tree.
 */
 
+import "core:fmt"
 import "core:mem"
 import "core:os"
-import "core:fmt"
+import "core:time"
 import bmff ".."
 
 parse_metadata := true
@@ -60,17 +61,24 @@ _main :: proc() {
 	fmt.printf("\tModified:  %v\n", f.file_info.modification_time)
 
 	fmt.println("\n-=-=-=-=-=-=- PARSED FILE -=-=-=-=-=-=-")
+
+	parse_start := time.now()
 	e := bmff.parse(f, parse_metadata)
+	parse_end   := time.now()
+	parse_diff  := time.diff(parse_start, parse_end)
+
+	print_start := time.now()
 	bmff.print(f)
+	print_end   := time.now()
+	print_diff  := time.diff(print_start, print_end)
+
 	fmt.println("\n-=-=-=-=-=-=- PARSED FILE -=-=-=-=-=-=-")
 	fmt.printf("Parse Error: %v\n\n", e)
 
-	when false {
-		println("----")
-		for v in bmff.FourCC {
-			fmt.printf("[%v]: 0x%08x\n", bmff._string(v), int(v))
-		}
-	}
+	parse_speed := f64(time.Second) / f64(parse_diff) * f64(f.file_info.size) / f64(1024 * 1024)
+
+	fmt.printf("Parse: %.2fs (%f MiB/s).\n", time.duration_seconds(parse_diff), parse_speed)
+	fmt.printf("Print: %.2fs.\n", time.duration_seconds(print_diff))
 }
 
 main :: proc() {
