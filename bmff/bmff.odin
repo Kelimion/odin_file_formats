@@ -358,12 +358,10 @@ parse :: proc(f: ^BMFF_File, parse_metadata := true) -> (err: Error) {
 			case 0:
 				if box.payload_size != size_of(MVHD_V0) { return .MVHD_Invalid_Size }
 				box.payload = common.read_data(fd, MVHD_V0) or_return
-
 				f.time_scale = box.payload.(MVHD_V0).time_scale
 			case 1:
 				if box.payload_size != size_of(MVHD_V1) { return .MVHD_Invalid_Size }
 				box.payload = common.read_data(fd, MVHD_V1) or_return
-
 				f.time_scale = box.payload.(MVHD_V1).time_scale
 			case:
 				unreachable()

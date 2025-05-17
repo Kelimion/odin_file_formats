@@ -49,9 +49,7 @@ _BMFF_Box_Header :: struct {
 #assert(size_of(_BMFF_Box_Header) == 8)
 
 BMFF_Box_Header :: struct {
-	/*
-		Box file offset, and size including header.
-	*/
+	// Box file offset, and size including header.
 	offset:         i64,
 	size:           i64,
 	end:            i64,
@@ -127,17 +125,17 @@ FTYP :: struct {
 	compatible:   [dynamic]FourCC,
 }
 
-Header_Flag_3 :: enum u8 {
+Header_Flag :: enum u8 {
 	track_enabled              = 0,
 	track_in_movie             = 1,
 	track_size_is_aspect_ratio = 2,
 }
-Header_Flags_3 :: bit_set[Header_Flag_3; u8]
+Header_Flags :: bit_set[Header_Flag; u8]
 
 Version_and_Flags :: struct #packed {
 	version: u8,
 	flag:    [2]u8,
-	flags_3: Header_Flags_3,
+	flags:   Header_Flags,
 }
 
 Times :: struct($T: typeid) #packed {
@@ -152,7 +150,7 @@ MVHD :: struct($T: typeid) #packed {
 	duration:          T,
 	preferred_rate:    Fixed_16_16,
 	preferred_volume:  Fixed_8_8,
-	_reserved:         [10]u8,
+	_reserved:         [10]u8 `fmt:"-"`,
 	view_matrix:       View_Matrix,
 	predefined:        MVHD_Predefined,
 	next_track_id:     u32be,
@@ -168,7 +166,7 @@ TKHD :: struct($T: typeid) #packed {
 	_reserved_1:       u32be,
 	duration:          T,
 
-	_reserved_2:       [2]u32be,
+	_reserved_2:       [2]u32be `fmt:"-"`,
 	layer:             i16be,
 	alternate_group:   i16be,
 	volume:            Fixed_8_8,
